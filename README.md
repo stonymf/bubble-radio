@@ -33,7 +33,8 @@ Liquidsoap is easily installed and doesn't require any configuration beyond sett
 
 **Create a `.env` file from the below template, replacing the values with your own.** Use absolute paths wherever filepaths are required. Dummy values are provided for a user `janedoe` who has cloned this repo into the directory `/home/janedoe/dev/bubble-radio`
 
-```## General config
+```
+## General config
 
 # maximum length in seconds above which songs will not be downloaded
 MAX_LENGTH=4140
