@@ -59,7 +59,6 @@ BASE_STREAM_URL=https://yoururl.com
 SECRET_KEY=yoursecretkey
 
 
-
 ## Liquidsoap and Icecast config
 
 # this is where Liquidsoap will look for your Icecast server
