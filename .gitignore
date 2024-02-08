@@ -1,0 +1,7 @@
+.env
+.venv/
+*.db
+*.log
+*.m3u
+disallow.txt
+__pycache__/

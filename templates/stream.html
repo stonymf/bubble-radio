@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ stream_name }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>{{ stream_name }}</h1>
+    <p style="color: #bbb">now playing</p>
+    <p><span id="currentSong">{{ title|safe }}</span></p>
+    <p><a target="_blank" id="sourceLink" href="{{ url }}">source</a></p>
+
+    <!-- Hidden HTML5 Audio Player -->
+    <audio id="audio-player">
+        <source src="{{ base_stream_url }}/{{ stream_name }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Play/Pause Button -->
+    <button id="playButton" onclick="playStream()">Play</button>
+    <button id="pauseButton" onclick="pauseStream()" style="display:none;">Pause</button>
+
+    <!-- Mute/Unmute Button -->
+    <button id="muteButton" onclick="toggleMute()">Mute</button>
+
+    <script>
+        var audioPlayer = document.getElementById('audio-player');
+        var playButton = document.getElementById('playButton');
+        var pauseButton = document.getElementById('pauseButton');
+        var muteButton = document.getElementById('muteButton');
+        var streamName = "{{ stream_name }}"; // Define the global variable for stream name
+
+        function playStream() {
+            if (audioPlayer) {
+                audioPlayer.pause();
+                document.body.removeChild(audioPlayer);
+            }
+
+            audioPlayer = document.createElement('audio');
+            audioPlayer.id = 'audio-player';
+            audioPlayer.src = '{{ base_stream_url }}/{{ stream_name }}';
+            audioPlayer.controls = false;
+            document.body.appendChild(audioPlayer);
+            audioPlayer.play();
+
+            playButton.style.display = 'none';
+            pauseButton.style.display = 'inline';
+        }
+
+        function pauseStream() {
+            if (audioPlayer) {
+                audioPlayer.pause();
+                document.body.removeChild(audioPlayer);
+                audioPlayer = null;
+            }
+
+            pauseButton.style.display = 'none';
+            playButton.style.display = 'inline';
+        }
+
+        function toggleMute() {
+            console.log('Mute toggle');
+            if (audioPlayer) {
+                audioPlayer.muted = !audioPlayer.muted;
+                muteButton.textContent = audioPlayer.muted ? 'Unmute' : 'Mute';
+            }
+        }
+
+        console.log('Stream player initialized');
+
+        function updateSongInfo() {
+            console.log('Updating song info');
+            fetch(`{{ base_stream_url }}/status-json.xsl`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Data received:', data);
+                    let found = false;
+                    if (data.icestats && data.icestats.source) {
+                        for (let source of data.icestats.source) {
+                            if (source.listenurl.endsWith(`/${streamName}`)) {
+                                const currentSong = source.title || "No song playing";
+
+                                // Update the song title on the page
+                                document.getElementById('currentSong').innerHTML = currentSong;
+
+                                if (currentSong !== "No song playing") {
+                                    // Fetch the original URL from the Flask app
+                                    fetch(`/get_original_url/${encodeURIComponent(streamName)}`)
+                                        .then(response => response.text())
+                                        .then(originalUrl => {
+                                            document.getElementById('sourceLink').href = originalUrl;
+                                        });
+                                }
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!found) {
+                        document.getElementById('currentSong').textContent = "No song playing";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching data from Icecast:", error);
+                    document.getElementById('currentSong').textContent = "Error fetching data";
+                });
+        }
+
+        
+        // Update the song information every 10 seconds (adjust as needed)
+        setInterval(updateSongInfo, 10000);
+
+        // Initial update
+        updateSongInfo();
+    </script>
+</body>
+</html>
+
