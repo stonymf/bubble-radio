@@ -6,7 +6,7 @@ The main components of this project are:
 
 - A **Flask server** which 
 	- receives and processes POST requests from Bubble
-	- serves a rudimentary frontend where users can access the radio streams
+	- serves as a rudimentary frontend where users can access the radio streams
 - A **`downloader.py`** script which downloads songs from links provided via POST request and commits the relevant metadata to a sqlite3 database
 - A **`playlists.py`** script which creates `.m3u` files to be used when serving the radio streams
 - A **`start_streams.sh`** shell script which utilizes `liquidsoap_script_template` and values from the `.env` file to initialize the radio streams
