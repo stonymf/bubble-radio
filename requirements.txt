@@ -4,3 +4,4 @@ mutagen==1.47.0
 python-dotenv==1.0.0
 requests==2.31.0
 yt-dlp==2023.11.16
+APScheduler==3.10.4

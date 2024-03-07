@@ -80,10 +80,6 @@ LIQUIDSOAP_LIVE_TEMPLATE_PATH=/home/janedoe/dev/bubble-radio/liq_config/live_str
 
 **Now create a blank `disallow.txt` file in your project's main directory.** This is where you can add sites you would like to ignore, one url on each line. For example, I currently just have one line containing `substack.com` because `yt-dlp` does funny things with substack urls.
 
-**Finally, set up a cron job to run `playlists.py` at regular intervals.** In the terminal, run `crontab -e`, and then add this line at the end of the file, making changes to the filepaths as needed:
-
-`0 */6 * * * /usr/bin/python3 /home/janedoe/dev/bubble-radio/playlists.py`
-
 ### Initial use
 
 Open a new `screen` session to run the Flask server:
@@ -106,7 +102,7 @@ Now, you can manually run `playlists.py` in order to generate a playlists contai
 
 This should generate playlists according to the server and channel that the downloaded songs originated from. These playlists will show up in your specified playlists directory.
 
-With the playlist files created, you can now run the `start_streams.sh` shell script in the main project directory. If your Liquidsoap and Icecast configurations are correct (both in your `.env` file and in `/etc/icecast2/icecast.xml`), this shell script should launch as many streams as there are playlist files (as well as a separate mountpoint for live streams) and serve them via Icecast. You may need to grant permissions to this file with `chmod +x start_streams.sh` before running it.
+With the playlist files created, you can now run the `start_streams.sh` shell script in the main project directory (you may want to do this in a separate `screen` as we did with the Flask server). If your Liquidsoap and Icecast configurations are correct (both in your `.env` file and in `/etc/icecast2/icecast.xml`), this shell script should launch as many streams as there are playlist files (as well as a separate mountpoint for live streams) and serve them via Icecast. You may need to grant permissions to this file with `chmod +x start_streams.sh` before running it.
 
 ### How to live stream to the live mountpoint
 

@@ -4,16 +4,17 @@ import sqlite3
 import html
 import logging
 from urllib.parse import urlparse
-from logger_config import configure_logging
 from dotenv import load_dotenv
 from downloader import download_audio
-
 import requests
 from flask import Flask, render_template, jsonify, request
 from urllib.parse import unquote
+from apscheduler.schedulers.background import BackgroundScheduler
 
-# Configure logging
-configure_logging('app.log')
+from logger_config import configure_logging
+import playlists
+
+logger = configure_logging('app.log', 'app_logger')
 
 # Grab .env values
 load_dotenv()
@@ -88,7 +89,7 @@ def get_current_song_info(stream_name):
         return title, url
 
     except requests.RequestException as e:
-        logging.error(f"Error fetching data from Icecast: {e}")
+        logger.error(f"Error fetching data from Icecast: {e}")
         return "Error fetching data", "No URL available"
 
     return "Unknown", "No URL provided"
@@ -121,6 +122,21 @@ def index():
     streams = [os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')]
     return render_template("index.html", streams=streams)
 
+def do_playlist_generation():
+    playlists.generate_playlists()
+    print("Playlists generated.")
 
 if __name__ == "__main__":
+    # Generate playlists upon running app.py
+    do_playlist_generation()
+
+    # Start a background schedular that runs the playlist generation script at regular 
+    # intervals specified in the scheduler.add_job() line
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(do_playlist_generation, 'interval', minutes=5)
+    scheduler.start()
+    
+    # Start the Flask application
     app.run(debug=True, host="0.0.0.0", port=5006)
+
+    logger.info("Flask server started")
