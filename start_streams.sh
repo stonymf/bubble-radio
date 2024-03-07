@@ -18,24 +18,25 @@ echo "PLAYLIST_DIRECTORY=$PLAYLIST_DIRECTORY"
 echo "LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH=$LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH"
 echo "LIQUIDSOAP_LIVE_TEMPLATE_PATH=$LIQUIDSOAP_LIVE_TEMPLATE_PATH" # Path to the live broadcast template
 echo "LOG_DIRECTORY=$LOG_DIRECTORY"
-echo "LIVE_BROADCAST_PORT=8765" # Define the port for live broadcasting
+echo "LIVE_STREAM_PORT=$LIVE_STREAM_PORT"
 echo "--------------------------------"
 
 # Generate and start a Liquidsoap instance for live broadcasting
-LIVE_BROADCAST_SCRIPT="/tmp/live_broadcast.liq"
-cp "$LIQUIDSOAP_LIVE_TEMPLATE_PATH" "$LIVE_BROADCAST_SCRIPT"
+LIVE_STREAM_SCRIPT="/tmp/live_stream.liq"
+cp "$LIQUIDSOAP_LIVE_TEMPLATE_PATH" "$LIVE_STREAM_SCRIPT"
 
 # Replace placeholders in the live broadcast script with actual values
-sed -i "s|{{host}}|$ICECAST_HOST|g" "$LIVE_BROADCAST_SCRIPT"
-sed -i "s|{{port}}|$ICECAST_PORT|g" "$LIVE_BROADCAST_SCRIPT"
-sed -i "s|{{password}}|$ICECAST_PASSWORD|g" "$LIVE_BROADCAST_SCRIPT"
-sed -i "s|{{mount}}|/live|g" "$LIVE_BROADCAST_SCRIPT"
+sed -i "s|{{live_stream_port}}|$LIVE_STREAM_PORT|g" "$LIVE_STREAM_SCRIPT"
+sed -i "s|{{host}}|$ICECAST_HOST|g" "$LIVE_STREAM_SCRIPT"
+sed -i "s|{{icecast_port}}|$ICECAST_PORT|g" "$LIVE_STREAM_SCRIPT"
+sed -i "s|{{password}}|$ICECAST_PASSWORD|g" "$LIVE_STREAM_SCRIPT"
+sed -i "s|{{mount}}|/live|g" "$LIVE_STREAM_SCRIPT"
 
 # Start the Liquidsoap instance for live broadcasting and redirect output to log file
-LOG_FILE="$LOG_DIRECTORY/live_broadcast.log"
-liquidsoap "$LIVE_BROADCAST_SCRIPT" > "$LOG_FILE" 2>&1 &
+LOG_FILE="$LOG_DIRECTORY/liq_live_stream.log"
+liquidsoap "$LIVE_STREAM_SCRIPT" > "$LOG_FILE" 2>&1 &
 
-echo "Started Liquidsoap Live Broadcast Session"
+echo "Started Liquidsoap Live Stream Session"
 
 # Directory containing playlist files
 PLAYLIST_DIR=$PLAYLIST_DIRECTORY
@@ -53,7 +54,7 @@ for playlist in "$PLAYLIST_DIR"/*.m3u; do
   sed -i "s|{{playlist_path}}|$playlist|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{stream_name}}|$playlist_name|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{host}}|$ICECAST_HOST|g" "$LIQUIDSOAP_SCRIPT"
-  sed -i "s|{{port}}|$ICECAST_PORT|g" "$LIQUIDSOAP_SCRIPT"
+  sed -i "s|{{icecast_port}}|$ICECAST_PORT|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{password}}|$ICECAST_PASSWORD|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{mount}}|/$playlist_name|g" "$LIQUIDSOAP_SCRIPT"
   

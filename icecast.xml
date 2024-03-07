@@ -22,7 +22,7 @@
         <admin-password>youradminpassword</admin-password>
     </authentication>
 
-    <hostname>localhost</hostname>
+    <hostname>yourhostname (not localhost, use url or ip)</hostname>
 
     <listen-socket>
         <port>8088</port>

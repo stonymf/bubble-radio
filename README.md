@@ -63,14 +63,18 @@ SECRET_KEY=yoursecretkey
 ## Liquidsoap and Icecast config
 
 # this is where Liquidsoap will look for your Icecast server
-ICECAST_HOST=localhost
+ICECAST_HOST=hostname (dont use localhost, use url or ip for your server)
 ICECAST_PORT=8088
+
+# this is the port you will tell people to livestream to
+LIVE_STREAM_PORT=8765
 
 # this needs to match with the source-password value in your icecast.xml
 ICECAST_PASSWORD=icecastsourcepassword
 
-# set this to the absolute filepath of liquidsoap_script_template.liq
-LIQUIDSOAP_SCRIPT_TEMPLATE_PATH=/home/janedoe/dev/bubble-radio/liquidsoap_script_template.liq
+# set this to the absolute filepaths of the two liquidsoap templates; these values should work
+LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH=/home/janedoe/dev/bubble-radio/liq_config/playlist_stream_template.liq
+LIQUIDSOAP_LIVE_TEMPLATE_PATH=/home/janedoe/dev/bubble-radio/liq_config/live_stream_template.liq
 ```
 
 **Now create a blank `disallow.txt` file in your project's main directory.** This is where you can add sites you would like to ignore, one url on each line. For example, I currently just have one line containing `substack.com` because `yt-dlp` does funny things with substack urls.
@@ -102,3 +106,7 @@ Now, you can manually run `playlists.py` in order to generate a playlists contai
 This should generate playlists according to the server and channel that the downloaded songs originated from. These playlists will show up in your specified playlists directory.
 
 With the playlist files created, you can now run the `start_streams.sh` shell script in the main project directory. If your Liquidsoap and Icecast configurations are correct (both in your `.env` file and in `/etc/icecast2/icecast.xml`), this shell script should launch as many streams as there are playlist files and serve them via Icecast. You may need to grant permissions to this file with `chmod +x start_streams.sh` before running it.
+
+### TODO
+
+add explanation of how to live stream
