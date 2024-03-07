@@ -2,7 +2,6 @@ import os
 import json
 import sqlite3
 import html
-import logging
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 from downloader import download_audio
@@ -22,6 +21,8 @@ secret_key = os.getenv("SECRET_KEY")
 db_path = os.getenv("DB_PATH")
 base_stream_url = os.getenv("BASE_STREAM_URL")
 playlist_directory = os.getenv("PLAYLIST_DIRECTORY")
+flask_port = os.getenv("FLASK_PORT")
+playlist_refresh_frequency = int(os.getenv("PLAYLIST_REFRESH_FREQUENCY"))
 
 app = Flask(__name__)
 
@@ -124,7 +125,7 @@ def index():
 
 def do_playlist_generation():
     playlists.generate_playlists()
-    print("Playlists generated.")
+    logger.info("Playlists generated.")
 
 if __name__ == "__main__":
     # Generate playlists upon running app.py
@@ -133,10 +134,10 @@ if __name__ == "__main__":
     # Start a background schedular that runs the playlist generation script at regular 
     # intervals specified in the scheduler.add_job() line
     scheduler = BackgroundScheduler()
-    scheduler.add_job(do_playlist_generation, 'interval', minutes=5)
+    scheduler.add_job(do_playlist_generation, 'interval', hours=playlist_refresh_frequency)
     scheduler.start()
     
     # Start the Flask application
-    app.run(debug=True, host="0.0.0.0", port=5006)
+    app.run(debug=True, host="0.0.0.0", port=flask_port)
 
     logger.info("Flask server started")

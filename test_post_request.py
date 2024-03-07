@@ -1,13 +1,19 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
 
-url = "http://localhost:5006/add_song"  # this port should match the port that your Flask server is running on
+load_dotenv()
+flask_port = os.getenv("FLASK_PORT")
+secret_key = os.getenv("SECRET_KEY")
+
+url = f"http://localhost:{flask_port}/add_song"  # this port should match the port that your Flask server is running on
 headers = {
     "Content-Type": "application/json",
-    "Authorization": "trust"  # this value should match the SECRET_KEY value in your .env file
+    "Authorization": secret_key  # this secret key authorizes the POST request with Flask
 }
 data = {
-    "url": "https://www.youtube.com/watch?v=Dc28VOvgQOY",
+    "url": "https://www.youtube.com/watch?v=ah-WNi-VbIw",
     "user": "test_user",
     "timestamp": "2024-03-06T00:00:00",
     "channel_name": "test_channel",

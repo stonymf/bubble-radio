@@ -39,6 +39,9 @@ Liquidsoap is easily installed and doesn't require any configuration beyond sett
 # maximum length in seconds above which songs will not be downloaded
 MAX_LENGTH=4140
 
+# how often (in hours) to refresh playlists to incorporate new tracks into stream
+PLAYLIST_REFRESH_FREQUENCY=6
+
 # where you want audio files to be downloaded
 DOWNLOAD_DIRECTORY=/home/janedoe/dev/bubble-radio/downloads
 
@@ -58,6 +61,9 @@ BASE_STREAM_URL=https://yoururl.com
 # this can be any arbitrary string of characters
 # it just needs to match the "Authorization" value for incoming POST requests
 SECRET_KEY=yoursecretkey
+
+# port that Flask server will listen on, set it to an open port
+FLASK_PORT=5000
 
 
 ## Liquidsoap and Icecast config
