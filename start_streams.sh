@@ -6,9 +6,6 @@ export $(grep -v '^#' .env | sed 's/#.*//' | xargs)
 # Determine the directory of the current script
 SCRIPT_DIR=$(dirname "$0")
 
-# Define the log directory as a 'logs' subdirectory of the script's directory
-LOG_DIRECTORY="$SCRIPT_DIR/logs"
-
 # Ensure the logs directory exists
 mkdir -p "$LOG_DIRECTORY"
 
