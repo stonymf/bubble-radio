@@ -66,7 +66,8 @@ SECRET_KEY=yoursecretkey
 ICECAST_HOST=hostname (dont use localhost, use url or ip for your server)
 ICECAST_PORT=8088
 
-# this is the port you will tell people to livestream to
+# this is the port that the live stream mountpoint will listen on
+# make sure it's on your firewall's allowlist
 LIVE_STREAM_PORT=8765
 
 # this needs to match with the source-password value in your icecast.xml
@@ -105,8 +106,24 @@ Now, you can manually run `playlists.py` in order to generate a playlists contai
 
 This should generate playlists according to the server and channel that the downloaded songs originated from. These playlists will show up in your specified playlists directory.
 
-With the playlist files created, you can now run the `start_streams.sh` shell script in the main project directory. If your Liquidsoap and Icecast configurations are correct (both in your `.env` file and in `/etc/icecast2/icecast.xml`), this shell script should launch as many streams as there are playlist files and serve them via Icecast. You may need to grant permissions to this file with `chmod +x start_streams.sh` before running it.
+With the playlist files created, you can now run the `start_streams.sh` shell script in the main project directory. If your Liquidsoap and Icecast configurations are correct (both in your `.env` file and in `/etc/icecast2/icecast.xml`), this shell script should launch as many streams as there are playlist files (as well as a separate mountpoint for live streams) and serve them via Icecast. You may need to grant permissions to this file with `chmod +x start_streams.sh` before running it.
 
-### TODO
+### How to live stream to the live mountpoint
 
-add explanation of how to live stream
+The easiest way to stream from your local computer to the mountpoint is by using [BUTT (broadcast using this tool)](https://danielnoethen.de/butt/).
+
+Download it and then launch and click on Settings. 
+
+On the Main tab, under Server Settings, click ADD, and use these settings:
+
+```
+Type: Icecast
+Use SSL/TLS: Leave unchecked
+Address: the ICECAST_HOST value in your .env
+Port: the LIVE_STREAM_PORT value in you .env
+Password: the ICECAST_PASSWORD value in your .env
+Icecast mountpoint: /live
+Icecast user: leave as 'source'
+```
+
+Then hit Save, select your audio source and hit the Play button to start streaming.
