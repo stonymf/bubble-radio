@@ -12,6 +12,7 @@ def generate_playlists():
     db_path = os.getenv("DB_PATH")
     playlist_dir = os.getenv("PLAYLIST_DIRECTORY")
     base_mp3_path = os.getenv("DOWNLOAD_DIRECTORY")
+    playlist_max_length = int(os.getenv("PLAYLIST_MAX_LENGTH"))
 
     try:
         # Connect to the database
@@ -47,7 +48,7 @@ def generate_playlists():
                 for row in rows:
                     track_filename, length = row
                     length = float(length)
-                    if total_length > 6 * 60 * 60:
+                    if total_length > playlist_max_length * 60 * 60:
                         break
                     total_length += length
                     mp3_file_path = os.path.join(base_mp3_path, track_filename)

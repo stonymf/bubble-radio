@@ -22,7 +22,7 @@ db_path = os.getenv("DB_PATH")
 base_stream_url = os.getenv("BASE_STREAM_URL")
 playlist_directory = os.getenv("PLAYLIST_DIRECTORY")
 flask_port = os.getenv("FLASK_PORT")
-playlist_refresh_frequency = int(os.getenv("PLAYLIST_REFRESH_FREQUENCY"))
+playlist_max_length = int(os.getenv("PLAYLIST_MAX_LENGTH"))
 
 app = Flask(__name__)
 
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # Start a background schedular that runs the playlist generation script at regular 
     # intervals specified in the scheduler.add_job() line
     scheduler = BackgroundScheduler()
-    scheduler.add_job(do_playlist_generation, 'interval', hours=playlist_refresh_frequency)
+    scheduler.add_job(do_playlist_generation, 'interval', hours=playlist_max_length)
     scheduler.start()
     
     # Start the Flask application

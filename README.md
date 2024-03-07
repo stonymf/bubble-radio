@@ -40,7 +40,7 @@ Liquidsoap is easily installed and doesn't require any configuration beyond sett
 MAX_LENGTH=4140
 
 # how often (in hours) to refresh playlists to incorporate new tracks into stream
-PLAYLIST_REFRESH_FREQUENCY=6
+PLAYLIST_MAX_LENGTH=6
 
 # where you want audio files to be downloaded
 DOWNLOAD_DIRECTORY=/home/janedoe/dev/bubble-radio/downloads
