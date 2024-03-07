@@ -15,15 +15,30 @@ echo "ICECAST_HOST=$ICECAST_HOST"
 echo "ICECAST_PORT=$ICECAST_PORT"
 echo "ICECAST_PASSWORD=$ICECAST_PASSWORD"
 echo "PLAYLIST_DIRECTORY=$PLAYLIST_DIRECTORY"
-echo "LIQUIDSOAP_SCRIPT_TEMPLATE_PATH=$LIQUIDSOAP_SCRIPT_TEMPLATE_PATH"
+echo "LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH=$LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH"
+echo "LIQUIDSOAP_LIVE_TEMPLATE_PATH=$LIQUIDSOAP_LIVE_TEMPLATE_PATH" # Path to the live broadcast template
 echo "LOG_DIRECTORY=$LOG_DIRECTORY"
+echo "LIVE_BROADCAST_PORT=8765" # Define the port for live broadcasting
 echo "--------------------------------"
+
+# Generate and start a Liquidsoap instance for live broadcasting
+LIVE_BROADCAST_SCRIPT="/tmp/live_broadcast.liq"
+cp "$LIQUIDSOAP_LIVE_TEMPLATE_PATH" "$LIVE_BROADCAST_SCRIPT"
+
+# Replace placeholders in the live broadcast script with actual values
+sed -i "s|{{host}}|$ICECAST_HOST|g" "$LIVE_BROADCAST_SCRIPT"
+sed -i "s|{{port}}|$ICECAST_PORT|g" "$LIVE_BROADCAST_SCRIPT"
+sed -i "s|{{password}}|$ICECAST_PASSWORD|g" "$LIVE_BROADCAST_SCRIPT"
+sed -i "s|{{mount}}|/live|g" "$LIVE_BROADCAST_SCRIPT"
+
+# Start the Liquidsoap instance for live broadcasting and redirect output to log file
+LOG_FILE="$LOG_DIRECTORY/live_broadcast.log"
+liquidsoap "$LIVE_BROADCAST_SCRIPT" > "$LOG_FILE" 2>&1 &
+
+echo "Started Liquidsoap Live Broadcast Session"
 
 # Directory containing playlist files
 PLAYLIST_DIR=$PLAYLIST_DIRECTORY
-
-# Path to the Liquidsoap script template
-LIQUIDSOAP_SCRIPT_TEMPLATE=$LIQUIDSOAP_SCRIPT_TEMPLATE_PATH
 
 # Iterate over each .m3u file in the playlist directory
 for playlist in "$PLAYLIST_DIR"/*.m3u; do
@@ -32,7 +47,7 @@ for playlist in "$PLAYLIST_DIR"/*.m3u; do
   
   # Generate a Liquidsoap script for the playlist
   LIQUIDSOAP_SCRIPT="/tmp/${playlist_name}.liq"
-  cp "$LIQUIDSOAP_SCRIPT_TEMPLATE" "$LIQUIDSOAP_SCRIPT"
+  cp "$LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH" "$LIQUIDSOAP_SCRIPT"
   
   # Replace placeholders in the Liquidsoap script with actual values
   sed -i "s|{{playlist_path}}|$playlist|g" "$LIQUIDSOAP_SCRIPT"
