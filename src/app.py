@@ -62,9 +62,8 @@ def get_current_song_info(stream_name):
     try:
         # Fetch the JSON data from Icecast's JSON status page
         response = requests.get(base_stream_url + "/status-json.xsl")
-        response.raise_for_status()  # Will raise an exception for HTTP errors
+        response.raise_for_status()
 
-        # Parse the JSON
         data = json.loads(response.text)
 
         # Connect to the database

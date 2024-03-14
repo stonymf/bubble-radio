@@ -36,7 +36,6 @@ def generate_playlists():
         logger.info('server_channels:')
         logger.info(server_channels)
 
-        # Function to generate a playlist file
         def generate_playlist(playlist_name, server_name, channel_name, recent=False):
 
             logger.info('insideeee generate_playlist before query')

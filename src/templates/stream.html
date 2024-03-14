@@ -31,12 +31,11 @@
         var streamName = "{{ stream_name }}"; // Define the global variable for stream name
 
         function playStream() {
-            // Directly play the audio without removing the audio element
             var playPromise = audioPlayer.play();
 
             if (playPromise !== undefined) {
                 playPromise.then(_ => {
-                    // Automatic playback started!
+                    // Automatic playback started
                     playButton.style.display = 'none';
                     pauseButton.style.display = 'inline';
                 }).catch(error => {

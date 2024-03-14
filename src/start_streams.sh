@@ -3,17 +3,6 @@
 # Load environment variables from .env file
 export $(grep -v '^#' .env | sed 's/#.*//' | xargs)
 
-# Flask server readiness check using nc
-# FLASK_READY_HOST="localhost"
-# FLASK_READY_PORT="${FLASK_PORT}" # Adjust if you have a specific health check endpoint
-
-# echo "Waiting for Flask server to be ready..."
-# while ! nc -z $FLASK_READY_HOST $FLASK_READY_PORT; do
-#     printf '.'
-#     sleep 5
-# done
-# echo "Flask server is ready."
-
 # Determine the directory of the current script
 SCRIPT_DIR=$(dirname "$0")
 
@@ -79,5 +68,5 @@ for playlist in "$PLAYLIST_DIR"/*.m3u; do
   liquidsoap "$LIQUIDSOAP_SCRIPT" > "$LOG_FILE" 2>&1 &
 done
 
-# Optionally, wait for all background processes to finish
+# wait for all background processes to finish
 wait
