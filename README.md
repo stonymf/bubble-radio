@@ -80,7 +80,7 @@ If a success status is returned, the song should now be in the downloads directo
 
 Playlists will periodically (every X hours, where X is the value of `PLAYLIST_MAX_LENGTH` from the `.env` file) generate playlist files according to the server and channel that the downloaded songs originated from. These playlists will show up in `/playlists`.
 
-Your streams should be listenable at `https://stream.yoururl.com/<playlist_name>` and you should also be able to view the basic frontend by visiting the flask server port, which can also be configured to a subdomain of `yoururl.com`.
+Your streams should be listenable at `https://stream.yoururl.com/<playlist_name>` (provided you have created the subdomain `stream` and routed it to your icecast port) and you should also be able to view the basic frontend by visiting the flask server port, which can also be configured to a subdomain of `yoururl.com`.
 
 ### How to live stream to the live mountpoint
 
