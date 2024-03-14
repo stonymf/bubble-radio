@@ -10,10 +10,10 @@ services:
       - .env
     volumes:
       - .:/usr/src/app
-      - ${LOG_DIRECTORY}:/usr/src/app/logs
+      - ./logs:/usr/src/app/logs
+      - ./playlists:/usr/src/app/playlists
+      - ./db.db:/usr/src/app/db.db
       - ${DOWNLOAD_DIRECTORY}:/usr/src/app/downloads
-      - ${PLAYLIST_DIRECTORY}:/usr/src/app/playlists
-      - ${DB_PATH}:/usr/src/app/db.db
     command: /bin/bash -c "gunicorn --bind 0.0.0.0:${FLASK_PORT} src.app:app"
 
   bubble-radio-icecast:
@@ -36,10 +36,10 @@ services:
       - .env
     volumes:
       - .:/usr/src/app
-      - ${LOG_DIRECTORY}:/usr/src/app/logs
+      - ./logs:/usr/src/app/logs
+      - ./playlists:/usr/src/app/playlists
+      - ./db.db:/usr/src/app/db.db
       - ${DOWNLOAD_DIRECTORY}:/usr/src/app/downloads
-      - ${PLAYLIST_DIRECTORY}:/usr/src/app/playlists
-      - ${DB_PATH}:/usr/src/app/db.db
     depends_on:
       - bubble-radio-app
       - bubble-radio-icecast
