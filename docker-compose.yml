@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  bubble-radio-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "${FLASK_PORT}:${FLASK_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+      - ${LOG_DIRECTORY}:/usr/src/app/logs
+      - ${DOWNLOAD_DIRECTORY}:/usr/src/app/downloads
+      - ${PLAYLIST_DIRECTORY}:/usr/src/app/playlists
+      - ${DB_PATH}:/usr/src/app/db.db
+    command: /bin/bash -c "gunicorn --bind 0.0.0.0:${FLASK_PORT} app:app"
+
+  bubble-radio-icecast:
+    image: pltnk/icecast2
+    ports:
+      - "${ICECAST_PORT}:${ICECAST_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - ./icecast.xml:/etc/icecast2/icecast.xml
+
+  bubble-radio-streams:
+    build:
+      context: .
+      dockerfile: Dockerfile.streams
+    working_dir: /usr/src/app
+    ports:
+      - "${LIVE_STREAM_PORT}:${LIVE_STREAM_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+      - ${LOG_DIRECTORY}:/usr/src/app/logs
+      - ${DOWNLOAD_DIRECTORY}:/usr/src/app/downloads
+      - ${PLAYLIST_DIRECTORY}:/usr/src/app/playlists
+      - ${DB_PATH}:/usr/src/app/db.db
+    depends_on:
+      - bubble-radio-app
+      - bubble-radio-icecast
+    command: /bin/bash -c "./start_streams.sh"

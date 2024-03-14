@@ -1,10 +1,8 @@
 import os
 import logging
-from dotenv import load_dotenv
 
 def configure_logging(log_filename, logger_name=None):
-    load_dotenv()
-    log_directory = os.getenv('LOG_DIRECTORY', '.')
+    log_directory = "/usr/src/app/logs"
     log_file = os.path.join(log_directory, log_filename)
 
     # Create or get the logger

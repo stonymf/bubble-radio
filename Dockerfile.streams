@@ -1,0 +1,23 @@
+# Dockerfile.liquidsoap
+# Use an official Debian base image
+FROM debian:buster
+
+# Set the working directory inside the container
+WORKDIR /usr/src/app
+
+# Install Liquidsoap
+RUN apt-get update && \
+    apt-get install -y liquidsoap && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user 'streams' and grant ownership of the working directory
+RUN useradd -m streams && \
+    chown -R streams:streams /usr/src/app && \
+    chown -R streams:streams /var/log/liquidsoap
+
+# Switch to the non-root user
+USER streams
+
+# The container starts with a shell, ready to run liquidsoap commands
+CMD ["/bin/bash"]

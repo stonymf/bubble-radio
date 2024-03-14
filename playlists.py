@@ -7,14 +7,19 @@ from logger_config import configure_logging
 def generate_playlists():
     logger = configure_logging('playlists.log', 'playlists_logger')
 
+    logger.info("its startingggggg")
+
     # Grab .env values
     load_dotenv()
-    db_path = os.getenv("DB_PATH")
-    playlist_dir = os.getenv("PLAYLIST_DIRECTORY")
-    base_mp3_path = os.getenv("DOWNLOAD_DIRECTORY")
     playlist_max_length = int(os.getenv("PLAYLIST_MAX_LENGTH"))
+    
+    db_path = "/usr/src/app/db.db"
+    playlist_dir = "/usr/src/app/playlists"
+    base_mp3_path = "/usr/src/app/downloads"
 
     try:
+
+        logger.info('inside tryyyyyyy')
         # Connect to the database
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -28,8 +33,14 @@ def generate_playlists():
         )
         server_channels = cursor.fetchall()
 
+        logger.info('server_channels:')
+        logger.info(server_channels)
+
         # Function to generate a playlist file
         def generate_playlist(playlist_name, server_name, channel_name, recent=False):
+
+            logger.info('insideeee generate_playlist before query')
+
             query = """
                     SELECT filename, length
                     FROM downloads
@@ -38,6 +49,8 @@ def generate_playlists():
             if recent:
                 query += " AND JULIANDAY('now') - JULIANDAY(timestamp) <= 30"
             query += " ORDER BY RANDOM() * (JULIANDAY('now') - IFNULL(JULIANDAY(last_added), 0)) DESC"
+
+            logger.info('after query')
 
             cursor.execute(query, (server_name, channel_name))
             rows = cursor.fetchall()

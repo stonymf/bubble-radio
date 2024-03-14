@@ -18,13 +18,20 @@ logger = configure_logging('app.log', 'app_logger')
 # Grab .env values
 load_dotenv()
 secret_key = os.getenv("SECRET_KEY")
-db_path = os.getenv("DB_PATH")
-base_stream_url = os.getenv("BASE_STREAM_URL")
-playlist_directory = os.getenv("PLAYLIST_DIRECTORY")
-flask_port = os.getenv("FLASK_PORT")
 playlist_max_length = int(os.getenv("PLAYLIST_MAX_LENGTH"))
+flask_port = os.getenv("FLASK_PORT")
+base_stream_url = os.getenv("BASE_STREAM_URL")
+
+db_path = "/usr/src/app/db.db"
+playlist_directory = "/usr/src/app/playlists"
 
 app = Flask(__name__)
+
+# Generate playlists and then initialize scheduler to do it periodically
+playlists.generate_playlists()
+scheduler = BackgroundScheduler()
+scheduler.add_job(playlists.generate_playlists, 'interval', hours=playlist_max_length)
+scheduler.start()
 
 def get_disallowed_domains():
     with open('disallow.txt', 'r') as file:
@@ -123,21 +130,7 @@ def index():
     streams = [os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')]
     return render_template("index.html", streams=streams)
 
-def do_playlist_generation():
-    playlists.generate_playlists()
-    logger.info("Playlists generated.")
-
 if __name__ == "__main__":
-    # Generate playlists upon running app.py
-    do_playlist_generation()
-
-    # Start a background schedular that runs the playlist generation script at regular 
-    # intervals specified in the scheduler.add_job() line
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(do_playlist_generation, 'interval', hours=playlist_max_length)
-    scheduler.start()
-    
-    # Start the Flask application
     app.run(debug=True, host="0.0.0.0", port=flask_port)
 
     logger.info("Flask server started")

@@ -129,3 +129,9 @@ Icecast user: leave as 'source'
 ```
 
 Then hit Save, select your audio source and hit the Play button to start streaming.
+
+
+
+
+
+REMINDER TO SELF: CREATE DATABASE FIRST `touch downloads.db`

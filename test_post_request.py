@@ -1,21 +1,38 @@
 import requests
 import json
 import os
+import sys
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
 flask_port = os.getenv("FLASK_PORT")
 secret_key = os.getenv("SECRET_KEY")
 
-url = f"http://localhost:{flask_port}/add_song"  # this port should match the port that your Flask server is running on
+# Check for the minimum number of arguments
+if len(sys.argv) < 2:
+    print("Usage: python test_post_request.py <url> [timestamp]")
+    sys.exit(1)
+
+# First command-line argument is the URL
+song_url = sys.argv[1]
+
+# Use the current time as the default timestamp
+timestamp = datetime.now().isoformat()
+
+# If a second argument is provided, use it as the timestamp
+if len(sys.argv) > 2:
+    timestamp = sys.argv[2]
+
+url = f"http://localhost:{flask_port}/add_song"
 headers = {
     "Content-Type": "application/json",
-    "Authorization": secret_key  # this secret key authorizes the POST request with Flask
+    "Authorization": secret_key
 }
 data = {
-    "url": "https://www.youtube.com/watch?v=ah-WNi-VbIw",
+    "url": song_url,
     "user": "test_user",
-    "timestamp": "2024-03-06T00:00:00",
+    "timestamp": timestamp,
     "channel_name": "test_channel",
     "channel_id": 987654321,
     "server_name": "test_server",

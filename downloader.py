@@ -15,8 +15,9 @@ logger = configure_logging('downloader.log', 'downloader_logger')
 # Grab .env values
 load_dotenv()
 max_length = int(os.getenv("MAX_LENGTH"))
-download_directory = os.getenv("DOWNLOAD_DIRECTORY")
-db_path = os.getenv("DB_PATH")
+
+download_directory = "/usr/src/app/downloads"
+db_path = "/usr/src/app/db.db"
 
 # Ensure the download directory exists
 if not os.path.exists(download_directory):

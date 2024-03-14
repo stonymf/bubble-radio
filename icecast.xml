@@ -4,8 +4,6 @@
 
     <limits>
         <clients>100</clients>
-        <! -- ensure that the sources value is equal to or greater than 
-        the number of concurrent streams -- >
         <sources>4</sources>
         <queue-size>524288</queue-size>
         <client-timeout>30</client-timeout>
@@ -16,13 +14,13 @@
     </limits>
 
     <authentication>
-        <source-password>yoursourcepassword</source-password>
-        <relay-password>yourrelaypassword</relay-password>
+        <source-password>icecastpassword</source-password>
+        <relay-password>icecastpassword</relay-password>
         <admin-user>admin</admin-user>
-        <admin-password>youradminpassword</admin-password>
+        <admin-password>icecastpassword</admin-password>
     </authentication>
 
-    <hostname>yourhostname (not localhost, use url or ip)</hostname>
+    <hostname>0.0.0.0</hostname>
 
     <listen-socket>
         <port>8088</port>
@@ -48,7 +46,7 @@
     <logging>
         <accesslog>access.log</accesslog>
         <errorlog>error.log</errorlog>
-        <loglevel>3</loglevel>
+        <loglevel>1</loglevel>
         <logsize>10000</logsize>
     </logging>
 
