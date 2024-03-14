@@ -12,8 +12,7 @@
     <p><a target="_blank" id="sourceLink" href="{{ url }}">source</a></p>
 
     <!-- Hidden HTML5 Audio Player -->
-    <audio id="audio-player">
-        <source src="{{ base_stream_url }}/{{ stream_name }}" type="audio/mpeg">
+    <audio id="audio-player" preload="auto" src="{{ base_stream_url }}/{{ stream_name }}" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -32,27 +31,24 @@
         var streamName = "{{ stream_name }}"; // Define the global variable for stream name
 
         function playStream() {
-            if (audioPlayer) {
-                audioPlayer.pause();
-                document.body.removeChild(audioPlayer);
+            // Directly play the audio without removing the audio element
+            var playPromise = audioPlayer.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    // Automatic playback started!
+                    playButton.style.display = 'none';
+                    pauseButton.style.display = 'inline';
+                }).catch(error => {
+                    // Auto-play was prevented
+                    console.error("Playback failed:", error);
+                });
             }
-
-            audioPlayer = document.createElement('audio');
-            audioPlayer.id = 'audio-player';
-            audioPlayer.src = '{{ base_stream_url }}/{{ stream_name }}';
-            audioPlayer.controls = false;
-            document.body.appendChild(audioPlayer);
-            audioPlayer.play();
-
-            playButton.style.display = 'none';
-            pauseButton.style.display = 'inline';
         }
 
         function pauseStream() {
             if (audioPlayer) {
                 audioPlayer.pause();
-                document.body.removeChild(audioPlayer);
-                audioPlayer = null;
             }
 
             pauseButton.style.display = 'none';
@@ -111,7 +107,6 @@
                 });
         }
 
-        
         // Update the song information every 10 seconds (adjust as needed)
         setInterval(updateSongInfo, 10000);
 
@@ -120,5 +115,3 @@
     </script>
 </body>
 </html>
-
-
