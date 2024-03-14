@@ -14,7 +14,7 @@ The main components of this project are:
 
 ### Setup
 
-The only configuration necessary should be the creation of an `.env` file appropriate to your system's configuration. You can place this `.env` file in the main project directory.
+The only configuration necessary\*\* should be the creation of an `.env` file appropriate to your system's configuration. You can place this `.env` file in the main project directory.
 
 Below is a template. Use absolute paths wherever filepaths are required.
 
@@ -50,7 +50,7 @@ FLASK_PORT=5000
 # you probably should not change this
 ICECAST_HOST=bubble-radio-icecast
 
-# set this to an available port and make sure it matches with the <port> value in icecast.xml
+# set this to an available port and \*\*make sure it matches with the <port> value in icecast.xml
 ICECAST_PORT=8088
 
 # this is the port you will tell people to livestream to
