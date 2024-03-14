@@ -26,15 +26,15 @@ echo "ICECAST_HOST=$ICECAST_HOST"
 echo "ICECAST_PORT=$ICECAST_PORT"
 echo "ICECAST_PASSWORD=$ICECAST_PASSWORD"
 echo "PLAYLIST_DIRECTORY=/usr/src/app/playlists"
-echo "LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH=/usr/src/app/liq_config/playlist_stream_template.liq.tmp"
-echo "LIQUIDSOAP_LIVE_TEMPLATE_PATH=/usr/src/app/liq_config/live_stream_template.liq.tmp" # Path to the live broadcast template
+echo "LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH=/usr/src/app/liq_config/templates/playlist_stream_template.liq.tmp"
+echo "LIQUIDSOAP_LIVE_TEMPLATE_PATH=/usr/src/app/liq_config/templates/live_stream_template.liq.tmp"
 echo "LOG_DIRECTORY=/usr/src/app/logs"
 echo "LIVE_STREAM_PORT=$LIVE_STREAM_PORT"
 echo "--------------------------------"
 
 # Generate and start a Liquidsoap instance for live broadcasting
 LIVE_STREAM_SCRIPT="/usr/src/app/liq_config/live_stream.liq"
-cp "/usr/src/app/liq_config/live_stream_template.liq.tmp" "$LIVE_STREAM_SCRIPT"
+cp "/usr/src/app/liq_config/templates/live_stream_template.liq.tmp" "$LIVE_STREAM_SCRIPT"
 
 # Replace placeholders in the live broadcast script with actual values
 sed -i "s|{{live_stream_port}}|$LIVE_STREAM_PORT|g" "$LIVE_STREAM_SCRIPT"
@@ -59,7 +59,7 @@ for playlist in "$PLAYLIST_DIR"/*.m3u; do
   
   # Generate a Liquidsoap script for the playlist
   LIQUIDSOAP_SCRIPT="/usr/src/app/liq_config/${playlist_name}.liq"
-  cp "/usr/src/app/liq_config/playlist_stream_template.liq.tmp" "$LIQUIDSOAP_SCRIPT"
+  cp "/usr/src/app/liq_config/templates/playlist_stream_template.liq.tmp" "$LIQUIDSOAP_SCRIPT"
   
   # Replace placeholders in the Liquidsoap script with actual values
   sed -i "s|{{playlist_path}}|$playlist|g" "$LIQUIDSOAP_SCRIPT"
