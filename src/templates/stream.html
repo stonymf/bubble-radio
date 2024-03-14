@@ -84,12 +84,12 @@
                     let found = false;
                     for (let source of sources) {
                         if (source.listenurl.endsWith(`/${streamName}`)) {
-                            const currentSong = source.title || "No song playing";
+                            const currentSong = source.title || "~~~";
 
                             // Update the song title on the page
                             document.getElementById('currentSong').innerHTML = currentSong;
 
-                            if (currentSong !== "No song playing") {
+                            if (currentSong !== "~~~") {
                                 // Fetch the original URL from the Flask app
                                 fetch(`/get_original_url/${encodeURIComponent(streamName)}`)
                                     .then(response => response.text())
@@ -102,7 +102,7 @@
                         }
                     }
                     if (!found) {
-                        document.getElementById('currentSong').textContent = "No song playing";
+                        document.getElementById('currentSong').textContent = "~~~";
                     }
                 })
                 .catch(error => {
