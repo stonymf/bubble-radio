@@ -51,7 +51,7 @@ FLASK_PORT=5000
 ICECAST_HOST=bubble-radio-icecast
 
 # set this to an available port and make sure it matches with the <port> value in icecast.xml
-ICECAST_PORT=8000
+ICECAST_PORT=8088
 
 # this is the port you will tell people to livestream to
 LIVE_STREAM_PORT=8765
