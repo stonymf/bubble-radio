@@ -14,7 +14,7 @@ RUN apt-get update && \
 COPY . .
 
 # Make the start_streams.sh script executable
-RUN chmod +x start_streams.sh
+RUN chmod +x src/start_streams.sh
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
 # Define environment variable
-ENV FLASK_APP=app.py
+ENV FLASK_APP=src/app.py
 
 # Run app.py when the container launches
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

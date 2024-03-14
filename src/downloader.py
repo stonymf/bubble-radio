@@ -2,12 +2,11 @@ import os
 import re
 import sqlite3
 import yt_dlp
-from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, TIT2
 from dotenv import load_dotenv
-from logger_config import configure_logging
+from src.logger_config import configure_logging
 
 # Configure logging
 logger = configure_logging('downloader.log', 'downloader_logger')

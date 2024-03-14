@@ -14,7 +14,7 @@ services:
       - ${DOWNLOAD_DIRECTORY}:/usr/src/app/downloads
       - ${PLAYLIST_DIRECTORY}:/usr/src/app/playlists
       - ${DB_PATH}:/usr/src/app/db.db
-    command: /bin/bash -c "gunicorn --bind 0.0.0.0:${FLASK_PORT} app:app"
+    command: /bin/bash -c "gunicorn --bind 0.0.0.0:${FLASK_PORT} src.app:app"
 
   bubble-radio-icecast:
     image: pltnk/icecast2
@@ -43,4 +43,4 @@ services:
     depends_on:
       - bubble-radio-app
       - bubble-radio-icecast
-    command: /bin/bash -c "./start_streams.sh"
+    command: /bin/bash -c "./src/start_streams.sh"

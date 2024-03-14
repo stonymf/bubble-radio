@@ -4,14 +4,14 @@ import sqlite3
 import html
 from urllib.parse import urlparse
 from dotenv import load_dotenv
-from downloader import download_audio
+from src.downloader import download_audio
 import requests
 from flask import Flask, render_template, jsonify, request
 from urllib.parse import unquote
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from logger_config import configure_logging
-import playlists
+from src.logger_config import configure_logging
+import src.playlists as playlists
 
 logger = configure_logging('app.log', 'app_logger')
 

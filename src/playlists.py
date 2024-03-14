@@ -2,7 +2,7 @@ import datetime
 import os
 import sqlite3
 from dotenv import load_dotenv
-from logger_config import configure_logging
+from src.logger_config import configure_logging
 
 def generate_playlists():
     logger = configure_logging('playlists.log', 'playlists_logger')
