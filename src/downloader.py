@@ -31,10 +31,10 @@ cursor.execute(
         id INTEGER PRIMARY KEY,
         title TEXT,
         username TEXT,
-        channel_name TEXT,
         channel_id INTEGER,
-        server_name TEXT,
         server_id INTEGER,
+        emoji_name TEXT,
+        emoji_id TEXT,
         timestamp DATETIME,
         url TEXT,
         filename TEXT,
@@ -57,7 +57,7 @@ def get_disallowed_domains():
     with open('disallow.txt', 'r') as file:
         return [line.strip() for line in file]
 
-def download_audio(url, user, timestamp, channel_name, channel_id, server_name, server_id):
+def download_audio(url, user, timestamp, channel_id, server_id, emoji_name, emoji_id):
     # Create database connection
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -121,10 +121,10 @@ def download_audio(url, user, timestamp, channel_name, channel_id, server_name, 
                 logger.info(f"Tagging completed for: {sanitized_mp3_filename}")
                 cursor.execute(
                     """
-                    INSERT INTO downloads (title, username, timestamp, url, filename, length, channel_name, channel_id, server_name, server_id)
+                    INSERT INTO downloads (title, username, timestamp, url, filename, length, channel_id, server_id, emoji_name, emoji_id)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (sanitized_title, user, timestamp, url, sanitized_mp3_filename, float(length), channel_name, channel_id, server_name, server_id),
+                    (sanitized_title, user, timestamp, url, sanitized_mp3_filename, float(length), channel_id, server_id, emoji_name, emoji_id),
                 )
                 conn.commit()
                 return "Success"
