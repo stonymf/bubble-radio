@@ -27,14 +27,14 @@ def generate_playlists():
         # Retrieve unique server and channel combinations
         cursor.execute(
             """
-            SELECT DISTINCT emoji_id
+            SELECT DISTINCT emoji_id, emoji_name
             FROM downloads
             """
         )
-        server_channels = cursor.fetchall()
+        server_inputs = cursor.fetchall()
 
-        logger.info('server_channels:')
-        logger.info(server_channels)
+        logger.info('server_inputs:')
+        logger.info(server_inputs)
 
         def generate_playlist(playlist_name, emoji_name, emoji_id, recent=False):
 
@@ -43,7 +43,7 @@ def generate_playlists():
             query = """
                     SELECT filename, length
                     FROM downloads
-                    WHERE emoji_id = ?
+                    WHERE emoji_id = ? AND emoji_name = ?
                     """
             if recent:
                 query += " AND JULIANDAY('now') - JULIANDAY(timestamp) <= 30"
@@ -51,7 +51,7 @@ def generate_playlists():
 
             logger.info('after query')
 
-            cursor.execute(query, (emoji_id))
+            cursor.execute(query, (emoji_id, emoji_name))
             rows = cursor.fetchall()
 
             total_length = 0
@@ -66,21 +66,20 @@ def generate_playlists():
                     mp3_file_path = os.path.join(base_mp3_path, track_filename)
                     f.write(mp3_file_path + "\n")
 
-                    cursor.execute(
-                        """
-                        UPDATE downloads
-                        SET last_added = ?
-                        WHERE filename = ?
-                        """,
-                        (now, track_filename),
-                    )
+                    query = """
+                            UPDATE downloads
+                            SET last_added = ?
+                            WHERE filename = ?
+                            """
+
+                    cursor.execute(query, (now, track_filename))
             conn.commit()
             logger.info(f'Playlist {playlist_name} generated with total length: {total_length} seconds.')
 
         # Generate playlists for each server and channel
-        for emoji_id, emoji_name in server_channels:
-            generate_playlist(f"{emoji_name}_{emoji_id}_all.m3u", emoji_name, emoji_id)
-            generate_playlist(f"{emoji_name}_{emoji_id}_recent.m3u", emoji_name, emoji_id, recent=True)
+        for emoji_id, emoji_name in server_inputs:
+            generate_playlist(f"{emoji_name}_all.m3u", emoji_name, emoji_id)
+            generate_playlist(f"{emoji_name}_recent.m3u", emoji_name, emoji_id, recent=True)
 
         conn.close()
         logger.info('All playlists generated successfully.')

@@ -28,7 +28,7 @@ playlist_directory = "/usr/src/app/playlists"
 app = Flask(__name__)
 
 # Generate playlists and then initialize scheduler to do it periodically
-playlists.generate_playlists()
+playlists.generate_playlists() 
 scheduler = BackgroundScheduler()
 scheduler.add_job(playlists.generate_playlists, 'interval', hours=playlist_max_length)
 scheduler.start()

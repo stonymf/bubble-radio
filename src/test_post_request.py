@@ -11,11 +11,12 @@ secret_key = os.getenv("SECRET_KEY")
 
 # Check for the minimum number of arguments
 if len(sys.argv) < 2:
-    print("Usage: python test_post_request.py <url> [timestamp]")
-    sys.exit(1)
+    song_url = "https://www.youtube.com/watch?v=KOFw2UPLdPk"
+    #print("Usage: python test_post_request.py <url> [timestamp]")
+    #sys.exit(1)
 
 # First command-line argument is the URL
-song_url = "https://www.youtube.com/watch?v=KOFw2UPLdPk" #sys.argv[1]
+song_url = sys.argv[1]
 
 # Use the current time as the default timestamp
 timestamp = datetime.now().isoformat()
@@ -35,7 +36,7 @@ data = {
     "timestamp": timestamp,
     "channel_id": 987654321,
     "server_id": 123456789,
-    "emoji_name": "emoji_name",
+    "emoji_name": "chao1",
     "emoji_id": 123456789
 }
 
