@@ -4,7 +4,7 @@
 
     <limits>
         <clients>100</clients>
-        <sources>4</sources>
+        <sources>20</sources>
         <queue-size>524288</queue-size>
         <client-timeout>30</client-timeout>
         <header-timeout>15</header-timeout>
