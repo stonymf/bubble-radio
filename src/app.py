@@ -9,6 +9,7 @@ import requests
 from flask import Flask, render_template, jsonify, request
 from urllib.parse import unquote
 from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
 
 from src.logger_config import configure_logging
 import src.playlists as playlists
@@ -27,11 +28,37 @@ playlist_directory = "/usr/src/app/playlists"
 
 app = Flask(__name__)
 
-# Generate playlists and then initialize scheduler to do it periodically
-playlists.generate_playlists() 
 scheduler = BackgroundScheduler()
-scheduler.add_job(playlists.generate_playlists, 'interval', hours=playlist_max_length)
 scheduler.start()
+
+def schedule_playlist_refresh(emoji_id, emoji_name, recent=False):
+    # Generate the playlist and get its total runtime
+    total_length = playlists.generate_playlist(emoji_id, emoji_name, recent)
+    # Calculate the refresh interval based on total runtime
+    # Here, you might decide on a strategy, like refreshing after the playlist has played once
+    refresh_interval = total_length  # Adjust this calculation as needed
+    # Schedule the next refresh
+    scheduler.add_job(schedule_playlist_refresh, 'date', run_date=datetime.now() + timedelta(seconds=refresh_interval), args=[emoji_id, emoji_name, recent])
+
+def start_scheduling():
+    logger.info("Starting scheduling...")
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        # Retrieve unique emoji_id and emoji_name combinations
+        cursor.execute("SELECT DISTINCT emoji_id, emoji_name FROM downloads")
+        server_inputs = cursor.fetchall()
+        logger.info(f"Found {len(server_inputs)} unique emoji_id and emoji_name combinations.")
+        for emoji_id, emoji_name in server_inputs:
+            # Schedule both all-time and recent playlists for each unique combination
+            schedule_playlist_refresh(emoji_id, emoji_name, recent=False)
+            schedule_playlist_refresh(emoji_id, emoji_name, recent=True)
+    except Exception as e:
+        logger.error(f"Error occurred during scheduling: {e}")
+    finally:
+        conn.close()
+
+start_scheduling()
 
 def get_disallowed_domains():
     with open('disallow.txt', 'r') as file:
@@ -130,6 +157,7 @@ def index():
     return render_template("index.html", streams=streams)
 
 if __name__ == "__main__":
+    start_scheduling()
     app.run(debug=True, host="0.0.0.0", port=flask_port)
-
     logger.info("Flask server started")
+

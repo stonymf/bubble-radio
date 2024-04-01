@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 
 # Install Liquidsoap
 RUN apt-get update && \
-    apt-get install -y liquidsoap && \
+    apt-get install -y liquidsoap sqlite3 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -16,8 +16,10 @@ RUN useradd -m streams && \
     chown -R streams:streams /usr/src/app && \
     chown -R streams:streams /var/log/liquidsoap
 
-# Switch to the non-root user
+RUN mkdir -p /usr/src/app/logs && \
+    chown -R streams:streams /usr/src/app/logs && \
+    chmod -R 755 /usr/src/app/logs
+
 USER streams
 
-# The container starts with a shell, ready to run liquidsoap commands
 CMD ["/bin/bash"]

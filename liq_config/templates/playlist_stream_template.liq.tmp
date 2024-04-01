@@ -1,7 +1,7 @@
 # Liquidsoap script template
 
 # Define the playlist
-playlist_{{stream_name}} = playlist(mode="normal", reload=86400, "{{playlist_path}}")
+playlist_{{stream_name}} = playlist(mode="normal", reload_mode="watch", "{{playlist_path}}")
 
 # Define a silent fallback source (which is also fallible)
 silent_fallback = blank(duration = 1.0)
