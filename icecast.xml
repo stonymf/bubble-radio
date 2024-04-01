@@ -26,12 +26,16 @@
         <port>8088</port> <!-- make sure this matches with ICECAST_PORT in .env -->
     </listen-socket>
 
+<!-- 
+    This block is commented out since it seems that implementing CORS headers at the icecast config
+    level doesn't work; seems best to set them in nginx config or other proxy config instead
     <http-headers>
         <header name="Access-Control-Allow-Origin" value="*" />
         <header name="Access-Control-Allow-Headers" value="Origin, Accept, X-Requested-With, Content-Type, If-Modified-Since, Icy-Metadata" />
         <header name="Access-Control-Expose-Headers" value="Icy-MetaInt, Icy-Br, Icy-Description, Icy-Genre, Icy-Name, Ice-Audio-Info, Icy-Url, Icy-Sr, Icy-Vbr, Icy-Pub" />
         <header name="Access-Control-Allow-Methods" value="GET, OPTIONS, SOURCE, PUT, HEAD, STATS" />
     </http-headers>
+-->
 
     <fileserve>1</fileserve>
 
