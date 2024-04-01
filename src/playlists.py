@@ -27,23 +27,23 @@ def generate_playlists():
         # Retrieve unique server and channel combinations
         cursor.execute(
             """
-            SELECT DISTINCT server_name, channel_name
+            SELECT DISTINCT emoji_id, emoji_name
             FROM downloads
             """
         )
-        server_channels = cursor.fetchall()
+        server_inputs = cursor.fetchall()
 
-        logger.info('server_channels:')
-        logger.info(server_channels)
+        logger.info('server_inputs:')
+        logger.info(server_inputs)
 
-        def generate_playlist(playlist_name, server_name, channel_name, recent=False):
+        def generate_playlist(playlist_name, emoji_name, emoji_id, recent=False):
 
             logger.info('insideeee generate_playlist before query')
 
             query = """
                     SELECT filename, length
                     FROM downloads
-                    WHERE server_name = ? AND channel_name = ?
+                    WHERE emoji_id = ? AND emoji_name = ?
                     """
             if recent:
                 query += " AND JULIANDAY('now') - JULIANDAY(timestamp) <= 30"
@@ -51,7 +51,7 @@ def generate_playlists():
 
             logger.info('after query')
 
-            cursor.execute(query, (server_name, channel_name))
+            cursor.execute(query, (emoji_id, emoji_name))
             rows = cursor.fetchall()
 
             total_length = 0
@@ -66,21 +66,20 @@ def generate_playlists():
                     mp3_file_path = os.path.join(base_mp3_path, track_filename)
                     f.write(mp3_file_path + "\n")
 
-                    cursor.execute(
-                        """
-                        UPDATE downloads
-                        SET last_added = ?
-                        WHERE filename = ?
-                        """,
-                        (now, track_filename),
-                    )
+                    query = """
+                            UPDATE downloads
+                            SET last_added = ?
+                            WHERE filename = ?
+                            """
+
+                    cursor.execute(query, (now, track_filename))
             conn.commit()
             logger.info(f'Playlist {playlist_name} generated with total length: {total_length} seconds.')
 
         # Generate playlists for each server and channel
-        for server_name, channel_name in server_channels:
-            generate_playlist(f"{server_name}_{channel_name}_all.m3u", server_name, channel_name)
-            generate_playlist(f"{server_name}_{channel_name}_recent.m3u", server_name, channel_name, recent=True)
+        for emoji_id, emoji_name in server_inputs:
+            generate_playlist(f"{emoji_name}_all.m3u", emoji_name, emoji_id)
+            generate_playlist(f"{emoji_name}_recent.m3u", emoji_name, emoji_id, recent=True)
 
         conn.close()
         logger.info('All playlists generated successfully.')

@@ -11,8 +11,9 @@ secret_key = os.getenv("SECRET_KEY")
 
 # Check for the minimum number of arguments
 if len(sys.argv) < 2:
-    print("Usage: python test_post_request.py <url> [timestamp]")
-    sys.exit(1)
+    song_url = "https://www.youtube.com/watch?v=KOFw2UPLdPk"
+    #print("Usage: python test_post_request.py <url> [timestamp]")
+    #sys.exit(1)
 
 # First command-line argument is the URL
 song_url = sys.argv[1]
@@ -33,10 +34,10 @@ data = {
     "url": song_url,
     "user": "test_user",
     "timestamp": timestamp,
-    "channel_name": "test_channel",
     "channel_id": 987654321,
-    "server_name": "test_server",
-    "server_id": 123456789
+    "server_id": 123456789,
+    "emoji_name": "chao1",
+    "emoji_id": 123456789
 }
 
 response = requests.post(url, headers=headers, data=json.dumps(data))
