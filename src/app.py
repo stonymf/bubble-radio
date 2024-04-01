@@ -28,7 +28,7 @@ playlist_directory = "/usr/src/app/playlists"
 app = Flask(__name__)
 
 # Generate playlists and then initialize scheduler to do it periodically
-playlists.generate_playlists()
+playlists.generate_playlists() 
 scheduler = BackgroundScheduler()
 scheduler.add_job(playlists.generate_playlists, 'interval', hours=playlist_max_length)
 scheduler.start()
@@ -46,12 +46,12 @@ def add_song():
     url = data.get('url')
     user = data.get('user')
     timestamp = data.get('timestamp')
-    channel_name = data.get('channel_name')
     channel_id = data.get('channel_id')
-    server_name = data.get('server_name')
     server_id = data.get('server_id')
-    
-    result = download_audio(url, user, timestamp, channel_name, channel_id, server_name, server_id)
+    emoji_name = data.get('emoji_name')
+    emoji_id = data.get('emoji_id')
+ 
+    result = download_audio(url, user, timestamp, channel_id, server_id, emoji_name, emoji_id)
     
     if result != "Success":
         return jsonify({"status": "error", "message": result}), 500

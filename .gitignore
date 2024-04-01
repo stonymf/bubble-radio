@@ -4,5 +4,11 @@
 *.log
 *.m3u
 *.liq
+media/
+downloads/
+playlists/
+liq_config/*
+!liq_config/templates/
 disallow.txt
 __pycache__/
+.DS_Store
