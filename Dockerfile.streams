@@ -16,10 +16,6 @@ RUN useradd -m streams && \
     chown -R streams:streams /usr/src/app && \
     chown -R streams:streams /var/log/liquidsoap
 
-RUN mkdir -p /usr/src/app/logs && \
-    chown -R streams:streams /usr/src/app/logs && \
-    chmod -R 755 /usr/src/app/logs
-
 USER streams
 
 CMD ["/bin/bash"]

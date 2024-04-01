@@ -35,10 +35,13 @@ def schedule_playlist_refresh(emoji_id, emoji_name, recent=False):
     # Generate the playlist and get its total runtime
     total_length = playlists.generate_playlist(emoji_id, emoji_name, recent)
     # Calculate the refresh interval based on total runtime
-    # Here, you might decide on a strategy, like refreshing after the playlist has played once
-    refresh_interval = total_length  # Adjust this calculation as needed
+    refresh_interval = total_length 
     # Schedule the next refresh
     scheduler.add_job(schedule_playlist_refresh, 'date', run_date=datetime.now() + timedelta(seconds=refresh_interval), args=[emoji_id, emoji_name, recent])
+
+    minutes, seconds = divmod(refresh_interval, 60)
+    
+    logger.info(f"Playlist for {emoji_name} ({'recent' if recent else 'all'}) created. Next refresh in {minutes} minutes and {seconds} seconds.")
 
 def start_scheduling():
     logger.info("Starting scheduling...")

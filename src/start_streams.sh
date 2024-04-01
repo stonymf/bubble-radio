@@ -41,21 +41,21 @@ echo "Started Liquidsoap Live Stream Session"
 # Directory containing playlist files
 PLAYLIST_DIR="/usr/src/app/playlists"
 
-# # Path to database
-# DB_PATH="/usr/src/app/db.db"
-# 
-# # Query the database for the count of unique emoji_id and emoji_name combinations
-# EXPECTED_PLAYLISTS=$(/usr/bin/sqlite3 $DB_PATH "SELECT COUNT(DISTINCT emoji_id || '-' || emoji_name) FROM downloads;")
-# 
-# echo "Waiting for $EXPECTED_PLAYLISTS playlists to be created..."
-# 
-# # Wait for the actual number of .m3u files to match the expected number
-# while [ $(ls "$PLAYLIST_DIR"/*.m3u 2> /dev/null | wc -l) -lt $EXPECTED_PLAYLISTS ]; do
-#   echo "Currently created playlists: $(ls "$PLAYLIST_DIR"/*.m3u 2> /dev/null | wc -l)/$EXPECTED_PLAYLISTS"
-#   sleep 5 # Check every 5 seconds
-# done
-# 
-# echo "All expected playlists have been created."
+# Path to database
+DB_PATH="/usr/src/app/db.db"
+
+# Query the database for the count of unique emoji_id and emoji_name combinations
+EXPECTED_PLAYLISTS=$(($(/usr/bin/sqlite3 $DB_PATH "SELECT COUNT(DISTINCT emoji_id || '-' || emoji_name) FROM downloads;") * 2))
+
+echo "Waiting for $EXPECTED_PLAYLISTS playlists to be created..."
+
+# Wait for the actual number of .m3u files to match the expected number
+while [ $(ls "$PLAYLIST_DIR"/*.m3u 2> /dev/null | wc -l) -lt $EXPECTED_PLAYLISTS ]; do
+  echo "Currently created playlists: $(ls "$PLAYLIST_DIR"/*.m3u 2> /dev/null | wc -l)/$EXPECTED_PLAYLISTS"
+  sleep 5 # Check every 5 seconds
+done
+
+echo "All expected playlists have been created."
 
 # Iterate over each .m3u file in the playlist directory
 for playlist in "$PLAYLIST_DIR"/*.m3u; do
