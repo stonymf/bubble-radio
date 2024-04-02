@@ -23,7 +23,7 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
         query = """SELECT * FROM
                 (SELECT filename, length
                 FROM downloads
-                WHERE emoji_id = ?
+                WHERE emoji_id = ? AND emoji_name = ?
                 ORDER BY timestamp DESC
                 LIMIT 1)
 
@@ -32,17 +32,17 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
                 SELECT * FROM
                 (SELECT filename, length
                 FROM downloads
-                WHERE emoji_id = ?
+                WHERE emoji_id = ? AND emoji_name = ?
                 AND filename NOT IN (SELECT filename
                                      FROM downloads
-                                     WHERE emoji_id = ?
+                                     WHERE emoji_id = ? AND emoji_name = ?
                                      ORDER BY timestamp DESC
                                      LIMIT 1)"""
         if recent:
             query += " AND JULIANDAY('now') - JULIANDAY(timestamp) <= 30"
         query += " ORDER BY RANDOM() * (JULIANDAY('now') - IFNULL(JULIANDAY(last_added), 0)) DESC);"
 
-        cursor.execute(query, (emoji_id, emoji_id, emoji_id))
+        cursor.execute(query, (emoji_id, emoji_name, emoji_id, emoji_name, emoji_id, emoji_name))
         rows = cursor.fetchall()
 
         now = datetime.datetime.now()
