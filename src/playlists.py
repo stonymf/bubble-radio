@@ -20,27 +20,29 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
         playlist_name = f"{emoji_name}_{'recent' if recent else 'all'}.m3u"
         logger.info(f'Generating playlist: {playlist_name}')
 
-        query = """
+        query = """SELECT * FROM
                 (SELECT filename, length
                 FROM downloads
-                WHERE emoji_id = ? AND emoji_name = ?
+                WHERE emoji_id = ?
                 ORDER BY timestamp DESC
                 LIMIT 1)
+
                 UNION
+
+                SELECT * FROM
                 (SELECT filename, length
                 FROM downloads
-                WHERE emoji_id = ? AND emoji_name = ?
+                WHERE emoji_id = ?
                 AND filename NOT IN (SELECT filename
                                      FROM downloads
-                                     WHERE emoji_id = ? AND emoji_name = ?
+                                     WHERE emoji_id = ?
                                      ORDER BY timestamp DESC
-                                     LIMIT 1)
-                """
+                                     LIMIT 1)"""
         if recent:
             query += " AND JULIANDAY('now') - JULIANDAY(timestamp) <= 30"
-        query += " ORDER BY RANDOM() * (JULIANDAY('now') - IFNULL(JULIANDAY(last_added), 0)) DESC"
+        query += " ORDER BY RANDOM() * (JULIANDAY('now') - IFNULL(JULIANDAY(last_added), 0)) DESC);"
 
-        cursor.execute(query, (emoji_id, emoji_name, emoji_id, emoji_name, emoji_id, emoji_name))
+        cursor.execute(query, (emoji_id, emoji_id, emoji_id))
         rows = cursor.fetchall()
 
         now = datetime.datetime.now()
@@ -71,3 +73,4 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
 
 if __name__ == "__main__":
     generate_playlist()
+
