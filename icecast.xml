@@ -23,7 +23,7 @@
     <hostname>0.0.0.0</hostname>
 
     <listen-socket>
-        <port>8088</port> <!-- make sure this matches with ICECAST_PORT in .env -->
+        <port>8000</port>
     </listen-socket>
 
 <!-- 

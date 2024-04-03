@@ -13,7 +13,7 @@ radio = fallback(track_sensitive = false, [playlist_{{stream_name}}, silent_fall
 # Define the Icecast output
 output.icecast(%mp3,
   host = "{{host}}",
-  port = {{icecast_port}},
+  port = 8000,
   password = "{{password}}",
   mount = "{{mount}}",
   radio,

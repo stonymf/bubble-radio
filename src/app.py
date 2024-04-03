@@ -19,8 +19,6 @@ logger = configure_logging('app.log', 'app_logger')
 # Grab .env values
 load_dotenv()
 secret_key = os.getenv("SECRET_KEY")
-playlist_max_length = int(os.getenv("PLAYLIST_MAX_LENGTH"))
-flask_port = os.getenv("FLASK_PORT")
 base_stream_url = os.getenv("BASE_STREAM_URL")
 
 db_path = "/usr/src/app/db.db"
@@ -147,13 +145,13 @@ def get_original_url(stream_name):
     return "No URL provided"
 
 
-@app.route("/stream/<stream_name>")
+@app.route("/demo/<stream_name>")
 def stream(stream_name):
     title, url = get_current_song_info(stream_name)
     return render_template("stream.html", stream_name=stream_name, title=title, url=url, base_stream_url=base_stream_url)
 
 
-@app.route("/")
+@app.route("/demo")
 def index():
     # Name streams based on playlist file names
     streams = [os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')]
@@ -161,6 +159,6 @@ def index():
 
 if __name__ == "__main__":
     start_scheduling()
-    app.run(debug=True, host="0.0.0.0", port=flask_port)
+    app.run(debug=True, host="0.0.0.0", port=5000)
     logger.info("Flask server started")
 

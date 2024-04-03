@@ -6,8 +6,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
-flask_port = os.getenv("FLASK_PORT")
 secret_key = os.getenv("SECRET_KEY")
+radio_port = os.getenv("RADIO_PORT")
 
 # Check for the minimum number of arguments
 if len(sys.argv) < 3:
@@ -27,7 +27,7 @@ timestamp = datetime.now().isoformat()
 if len(sys.argv) > 3:
     timestamp = sys.argv[3]
 
-url = f"http://localhost:{flask_port}/add_song"
+url = f"http://localhost:{radio_port}/add_song"
 headers = {
     "Content-Type": "application/json",
     "Authorization": secret_key

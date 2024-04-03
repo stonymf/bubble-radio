@@ -2,16 +2,38 @@
 <html>
 <head>
     <title>#music</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <meta charset="UTF-8">
 </head>
 <body>
     <h1>#music</h1>
     <ul>
-        {% for stream in streams %}
-            <li><a href="/stream/{{ stream }}">{{ stream.replace('_', ' ') }}</a></li>
+        {% for stream in streams|sort %}
+            <li><a href="/demo/{{ stream }}">{{ stream.replace('_', ' ') }}</a></li>
         {% endfor %}
     </ul>
 </body>
 </html>
 
+<style>
+body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    color: #333;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    margin: 10px 0;
+}
+
+audio, button {
+    margin: 10px 0;
+}
+</style>

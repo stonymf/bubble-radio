@@ -7,7 +7,6 @@ from src.logger_config import configure_logging
 def generate_playlist(emoji_id, emoji_name, recent=False):
     logger = configure_logging('playlists.log', 'playlists_logger')
     load_dotenv()
-    playlist_max_length = int(os.getenv("PLAYLIST_MAX_LENGTH"))
     db_path = "/usr/src/app/db.db"
     playlist_dir = "/usr/src/app/playlists"
     base_mp3_path = "/usr/src/app/downloads"
@@ -50,7 +49,7 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
             for row in rows:
                 track_filename, length = row
                 length = float(length)
-                if total_length > playlist_max_length * 60 * 60:
+                if total_length > 6 * 60 * 60:
                     break
                 total_length += length
                 mp3_file_path = os.path.join(base_mp3_path, track_filename)

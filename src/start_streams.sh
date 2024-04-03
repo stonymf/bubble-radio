@@ -12,7 +12,6 @@ mkdir -p "/usr/src/app/logs"
 # Print the environment variables to verify they're loaded correctly
 echo "Loaded Environment Variables:"
 echo "ICECAST_HOST=$ICECAST_HOST"
-echo "ICECAST_PORT=$ICECAST_PORT"
 echo "ICECAST_PASSWORD=$ICECAST_PASSWORD"
 echo "PLAYLIST_DIRECTORY=/usr/src/app/playlists"
 echo "LIQUIDSOAP_PLAYLIST_TEMPLATE_PATH=/usr/src/app/liq_config/templates/playlist_stream_template.liq.tmp"
@@ -28,7 +27,6 @@ cp "/usr/src/app/liq_config/templates/live_stream_template.liq.tmp" "$LIVE_STREA
 # Replace placeholders in the live broadcast script with actual values
 sed -i "s|{{live_stream_port}}|$LIVE_STREAM_PORT|g" "$LIVE_STREAM_SCRIPT"
 sed -i "s|{{host}}|$ICECAST_HOST|g" "$LIVE_STREAM_SCRIPT"
-sed -i "s|{{icecast_port}}|$ICECAST_PORT|g" "$LIVE_STREAM_SCRIPT"
 sed -i "s|{{password}}|$ICECAST_PASSWORD|g" "$LIVE_STREAM_SCRIPT"
 sed -i "s|{{mount}}|/live|g" "$LIVE_STREAM_SCRIPT"
 
@@ -70,7 +68,6 @@ for playlist in "$PLAYLIST_DIR"/*.m3u; do
   sed -i "s|{{playlist_path}}|$playlist|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{stream_name}}|$playlist_name|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{host}}|$ICECAST_HOST|g" "$LIQUIDSOAP_SCRIPT"
-  sed -i "s|{{icecast_port}}|$ICECAST_PORT|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{password}}|$ICECAST_PASSWORD|g" "$LIQUIDSOAP_SCRIPT"
   sed -i "s|{{mount}}|/$playlist_name|g" "$LIQUIDSOAP_SCRIPT"
   

@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>{{ stream_name }}</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <meta charset="UTF-8">
 </head>
 <body>
@@ -114,3 +113,27 @@
     </script>
 </body>
 </html>
+
+<style>
+    body {
+        text-align: center;
+        font-family: Arial, sans-serif;
+    }
+    
+    h1 {
+        color: #333;
+    }
+    
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    
+    ul li {
+        margin: 10px 0;
+    }
+    
+    audio, button {
+        margin: 10px 0;
+    }
+    </style>

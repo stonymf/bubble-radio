@@ -14,7 +14,7 @@ The main components of this project are:
 
 ### Setup
 
-The only configuration necessary\*\* should be the creation of an `.env` file appropriate to your system's configuration. You can place this `.env` file in the main project directory.
+The only configuration necessary should be the creation of an `.env` file appropriate to your system's configuration. You can place this `.env` file in the main project directory.
 
 Below is a template. Use absolute paths wherever filepaths are required.
 
@@ -24,25 +24,15 @@ Below is a template. Use absolute paths wherever filepaths are required.
 # maximum length in seconds above which songs will not be downloaded
 MAX_LENGTH=4140
 
-# maximum length for a playlist (in hours)
-# this is also the value for how often the playlists will get refreshed by liquidsoap
-# it _does not_ mean that you will only have this many hours of music streaming on your station
-# because playlists will contain different songs each time they are created, and underplayed
-# songs are prioritized by the playlist creation script, to ensure equal play frequency
-PLAYLIST_MAX_LENGTH=6
-
 # where you want audio files to be downloaded
 DOWNLOAD_DIRECTORY=/mnt/somevolume/media
 
 # url where streams are being served publicly by icecast
-# easiest to make a subdomain like 'stream' that just points to your icecast port
+# this is only really necessary for the demo frontend and not crucial for core functionality
 BASE_STREAM_URL=https://stream.yoururl.com
 
 # secret key to verify POST requests from Bubble
 SECRET_KEY=your_secret_key
-
-# port that Flask server will listen on
-FLASK_PORT=5000
 
 
 ## Network config
@@ -50,8 +40,8 @@ FLASK_PORT=5000
 # you probably should not change this
 ICECAST_HOST=bubble-radio-icecast
 
-# set this to an available port and \*\*make sure it matches with the <port> value in icecast.xml
-ICECAST_PORT=8088
+# set this to an available port that you want to use for bubble-radio
+RADIO_PORT=8000
 
 # this is the port you will tell people to livestream to
 LIVE_STREAM_PORT=8765
@@ -74,13 +64,13 @@ This creates a placeholder database file for docker to mount its database to.
 
 You should be able to `docker compose up --build` and, if your `.env` configuration and network/port settings are correct, everything should start up.
 
-You can try sending a test POST request with `python src/test_post_request.py <any youtube song url>`
+You can try sending a test POST request with `python src/test_post_request.py <any youtube song url> <an emoji name>`
 
 If a success status is returned, the song should now be in the downloads directory you specified in the `.env` file.
 
-Playlists will periodically (every X hours, where X is the value of `PLAYLIST_MAX_LENGTH` from the `.env` file) generate playlist files according to the server and channel that the downloaded songs originated from. These playlists will show up in `/playlists`.
+Playlists will periodically (at a frequency equal to each respective playlist's length) generate playlist files according to the emoji/react that the downloaded songs originated from. These playlists will show up in `/playlists`.
 
-Your streams should be listenable at `https://stream.yoururl.com/<playlist_name>` (provided you have created the subdomain `stream` and routed it to your icecast port) and you should also be able to view the basic frontend by visiting the flask server port, which can also be configured to a subdomain of `yoururl.com`.
+Your streams should be listenable at `https://stream.yoururl.com/<playlist_name>` (provided you have created the subdomain `stream` and routed it to your RADIO_PORT) and you should also be able to view the basic frontend by visiting `https://stream.yoururl.com/demo`
 
 ### How to live stream to the live mountpoint
 
