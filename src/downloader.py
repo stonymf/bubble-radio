@@ -70,6 +70,11 @@ def download_audio(url, user, timestamp, channel_id, server_id, emoji_name, emoj
             logger.info(f"The domain {domain} is disallowed.")
             return "Error: The domain is disallowed."
 
+        # Don't download full bandcamp albums
+        if "bandcamp.com/album/" in url:
+            logger.info(f"Bandcamp album URL declined: {url}")
+            return "Error: Bandcamp album URLs are not allowed."
+
         logger.info(f"Starting extraction info for URL: {url}")
         with yt_dlp.YoutubeDL({"format": "bestaudio/best", "skip_download": True}) as ydl:
             info_dict = ydl.extract_info(url, download=False)
