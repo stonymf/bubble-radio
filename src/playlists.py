@@ -12,6 +12,9 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
     base_mp3_path = "/usr/src/app/downloads"
     total_length = 0
 
+    # Retrieve the time interval from the .env file or use a default value of 30 days
+    recency_period = int(os.getenv('RECENCY_PERIOD', '30'))
+
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -38,7 +41,7 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
                                      ORDER BY timestamp DESC
                                      LIMIT 1)"""
         if recent:
-            query += " AND JULIANDAY('now') - JULIANDAY(timestamp) <= 30"
+            query += f" AND JULIANDAY('now') - JULIANDAY(timestamp) <= {recency_period}"
         query += " ORDER BY RANDOM() * (JULIANDAY('now') - IFNULL(JULIANDAY(last_added), 0)) DESC);"
 
         cursor.execute(query, (emoji_id, emoji_name, emoji_id, emoji_name, emoji_id, emoji_name))
@@ -72,4 +75,3 @@ def generate_playlist(emoji_id, emoji_name, recent=False):
 
 if __name__ == "__main__":
     generate_playlist()
-

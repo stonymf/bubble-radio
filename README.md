@@ -24,6 +24,10 @@ Below is a template. Use absolute paths wherever filepaths are required.
 # maximum length in seconds above which songs will not be downloaded
 MAX_LENGTH=4140
 
+# recency period (in days) for _recent playlists; e.g. a value of 30 will cause the _recent playlists
+# to only contain songs that have been added in the last 30 days
+RECENCY_PERIOD=30
+
 # where you want audio files to be downloaded
 DOWNLOAD_DIRECTORY=/mnt/somevolume/media
 
