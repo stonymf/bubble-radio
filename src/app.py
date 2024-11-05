@@ -157,16 +157,28 @@ def index():
     streams = [os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')]
     return render_template("index.html", streams=streams)
 
-def extract_emoji_id(emoji_id_str):
+def extract_emoji_id(emoji_id_input):
     # This function is necessary as long as we're receiving `emoji_id` values from Bubble bot that
     # are inside of angle brackets, which is the raw data format vs the id number itself
-    if not emoji_id_str:
+
+    # Handle None case
+    if not emoji_id_input:
         return None
-    # Check if it's in Discord format <:name:id> or <a:name:id>
-    if emoji_id_str.startswith('<') and emoji_id_str.endswith('>'):
-        # Extract the last part after the last colon
-        return emoji_id_str.split(':')[-1][:-1]
-    return emoji_id_str
+    
+    # If it's already an integer, return it
+    if isinstance(emoji_id_input, int):
+        return emoji_id_input
+        
+    # If it's a string in Discord format <:name:id> or <a:name:id>
+    if isinstance(emoji_id_input, str):
+        if emoji_id_input.startswith('<') and emoji_id_input.endswith('>'):
+            # Extract the last part after the last colon and convert to int
+            return int(emoji_id_input.split(':')[-1][:-1])
+        # If it's a numeric string, convert to int
+        elif emoji_id_input.isdigit():
+            return int(emoji_id_input)
+    
+    raise ValueError(f"Invalid emoji_id format: {emoji_id_input}")
 
 if __name__ == "__main__":
     start_scheduling()
