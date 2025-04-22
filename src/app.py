@@ -157,6 +157,40 @@ def index():
     streams = [os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')]
     return render_template("index.html", streams=streams)
 
+@app.route("/admin")
+def admin():
+    # Get all playlists and sort them alphabetically
+    playlists = sorted([os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')])
+    
+    # Get songs for each playlist
+    playlist_songs = {}
+    
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    for playlist_name in playlists:
+        # Extract emoji_name and whether it's recent or all
+        parts = playlist_name.split('_')
+        if len(parts) > 1:
+            emoji_name = parts[0]
+            playlist_type = parts[1]  # 'recent' or 'all'
+            
+            # Query to get songs for this playlist's emoji
+            cursor.execute("""
+                SELECT title, url, username, timestamp 
+                FROM downloads 
+                WHERE emoji_name = ? 
+                ORDER BY timestamp DESC
+            """, (emoji_name,))
+            
+            songs = [dict(row) for row in cursor.fetchall()]
+            playlist_songs[playlist_name] = songs
+    
+    conn.close()
+    
+    return render_template("admin.html", playlists=playlists, playlist_songs=playlist_songs)
+
 if __name__ == "__main__":
     start_scheduling()
     app.run(debug=True, host="0.0.0.0", port=5000)

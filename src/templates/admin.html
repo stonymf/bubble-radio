@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bubble Radio Admin</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        /* Tab styles */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-btn {
+            border: none;
+            padding: 10px 20px;
+            background: #f2f2f2;
+            cursor: pointer;
+            margin-right: 5px;
+            font-size: 14px;
+            border-radius: 5px 5px 0 0;
+            border: 1px solid #ddd;
+            border-bottom: none;
+        }
+        .tab-btn:hover {
+            background: #e9e9e9;
+        }
+        .tab-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #3498db;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .song-count {
+            font-weight: normal;
+            color: #7f8c8d;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bubble Radio Admin</h1>
+    
+    <p>
+        <a href="/demo" class="back-link">← Back to Stream List</a>
+    </p>
+    
+    <!-- Tab buttons -->
+    <div class="tabs">
+        {% for playlist in playlists %}
+        <button class="tab-btn {% if loop.first %}active{% endif %}" onclick="openTab(event, '{{ playlist }}')">
+            {{ playlist }} <span class="song-count">({{ playlist_songs[playlist]|default([])|length }})</span>
+        </button>
+        {% endfor %}
+    </div>
+    
+    <!-- Tab content -->
+    {% for playlist in playlists %}
+    <div id="{{ playlist }}" class="tab-content {% if loop.first %}active{% endif %}">
+        <h2>{{ playlist }}</h2>
+        
+        {% if playlist_songs[playlist] %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Added By</th>
+                    <th>Date Added</th>
+                    <th>Source</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for song in playlist_songs[playlist] %}
+                <tr>
+                    <td>{{ song['title'] }}</td>
+                    <td>{{ song['username'] }}</td>
+                    <td>{{ song['timestamp'] }}</td>
+                    <td><a href="{{ song['url'] }}" target="_blank">Original Source</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No songs found for this playlist.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <script>
+        function openTab(evt, tabName) {
+            // Hide all tab content
+            var tabContent = document.getElementsByClassName("tab-content");
+            for (var i = 0; i < tabContent.length; i++) {
+                tabContent[i].classList.remove("active");
+            }
+            
+            // Remove active class from all tab buttons
+            var tabButtons = document.getElementsByClassName("tab-btn");
+            for (var i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("active");
+            }
+            
+            // Show the selected tab content and mark the button as active
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+    </script>
+</body>
+</html> 
