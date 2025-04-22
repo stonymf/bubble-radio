@@ -2,11 +2,12 @@ import os
 import json
 import sqlite3
 import html
+from functools import wraps
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 from src.downloader import download_audio
 import requests
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, Response
 from urllib.parse import unquote
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
@@ -20,11 +21,26 @@ logger = configure_logging('app.log', 'app_logger')
 load_dotenv()
 secret_key = os.getenv("SECRET_KEY")
 base_stream_url = os.getenv("BASE_STREAM_URL")
+# Read admin credentials from .env file with fallback defaults
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "bubbleradio")
 
 db_path = "/usr/src/app/db.db"
 playlist_directory = "/usr/src/app/playlists"
 
 app = Flask(__name__)
+
+# Basic authentication function
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or auth.username != ADMIN_USERNAME or auth.password != ADMIN_PASSWORD:
+            return Response(
+                'Please login with valid credentials', 401,
+                {'WWW-Authenticate': 'Basic realm="Admin Access"'})
+        return f(*args, **kwargs)
+    return decorated
 
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -158,6 +174,7 @@ def index():
     return render_template("index.html", streams=streams)
 
 @app.route("/admin")
+@requires_auth
 def admin():
     # Get all playlists and sort them alphabetically
     playlists = sorted([os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')])
@@ -192,6 +209,7 @@ def admin():
     return render_template("admin.html", playlists=playlists, playlist_songs=playlist_songs)
 
 @app.route("/admin/edit_song", methods=['POST'])
+@requires_auth
 def edit_song():
     song_id = request.form.get('id')
     title = request.form.get('title')
@@ -241,6 +259,7 @@ def edit_song():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/admin/delete_song", methods=['POST'])
+@requires_auth
 def delete_song():
     song_id = request.form.get('id')
     

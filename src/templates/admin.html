@@ -1,103 +1,158 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bubble Radio Admin</title>
+    <title>Bubble Radio Admin Terminal</title>
     <meta charset="UTF-8">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+        
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 0;
-            color: #333;
+            font-family: 'IBM Plex Mono', monospace;
+            margin: 0;
+            padding: 20px;
+            background-color: #4E9986;
+            color: white;
+            line-height: 1.5;
         }
+        
+        .terminal {
+            border: 1px solid white;
+            border-radius: 0;
+            padding: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            margin-bottom: 15px;
+        }
+        
+        .terminal-bar {
+            background-color: white;
+            color: #4E9986;
+            padding: 5px 10px;
+            font-weight: bold;
+            margin: -10px -10px 10px -10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
         h1 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 20px;
+            margin: 0;
+            padding: 15px 0;
+            text-align: center;
+            border-bottom: 1px solid white;
         }
+        
         /* Tab styles */
         .tabs {
             display: flex;
             flex-wrap: wrap;
-            margin-top: 30px;
-            border-bottom: 1px solid #ddd;
+            margin-top: 20px;
+            border-bottom: 1px solid white;
         }
+        
         .tab-btn {
-            border: none;
-            padding: 10px 20px;
-            background: #f2f2f2;
+            border: 1px solid white;
+            border-bottom: none;
+            padding: 8px 15px;
+            background: #4E9986;
             cursor: pointer;
             margin-right: 5px;
             font-size: 14px;
-            border-radius: 5px 5px 0 0;
-            border: 1px solid #ddd;
-            border-bottom: none;
-        }
-        .tab-btn:hover {
-            background: #e9e9e9;
-        }
-        .tab-btn.active {
-            background: #3498db;
+            font-family: 'IBM Plex Mono', monospace;
             color: white;
-            border-color: #3498db;
         }
+        
+        .tab-btn:hover {
+            background: #3C7A6B;
+        }
+        
+        .tab-btn.active {
+            background: #81C7E8;
+            border-color: white;
+            color: #333333;
+        }
+        
         .tab-content {
             display: none;
             padding: 20px 0;
         }
+        
         .tab-content.active {
             display: block;
         }
+        
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
             margin-bottom: 30px;
+            border: 1px solid white;
         }
+        
         th, td {
-            padding: 10px;
+            padding: 8px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid white;
+            border-right: 1px solid white;
         }
+        
         th {
-            background-color: #f2f2f2;
+            background-color: #3C7A6B;
             font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9em;
         }
+        
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #419179;
         }
+        
         .back-link {
             display: inline-block;
             margin-top: 20px;
-            color: #3498db;
+            color: white;
             text-decoration: none;
+            border: 1px solid white;
+            padding: 5px 10px;
         }
+        
         .back-link:hover {
-            text-decoration: underline;
+            background-color: #3C7A6B;
         }
+        
         .song-count {
             font-weight: normal;
-            color: #7f8c8d;
+            color: #E3E3E3;
             font-size: 0.8em;
             margin-left: 10px;
         }
+        
         .action-btn {
-            background-color: #3498db;
+            background-color: #4E9986;
             color: white;
-            border: none;
+            border: 1px solid white;
             padding: 5px 10px;
-            border-radius: 3px;
             cursor: pointer;
             margin-right: 5px;
             font-size: 12px;
+            font-family: 'IBM Plex Mono', monospace;
         }
+        
         .delete-btn {
-            background-color: #e74c3c;
+            border-color: #ffcccc;
+            color: #ffcccc;
         }
+        
         .action-btn:hover {
-            opacity: 0.8;
+            background-color: #3C7A6B;
         }
+        
+        .delete-btn:hover {
+            background-color: #5D413F;
+        }
+        
         /* Modal styles */
         .modal {
             display: none;
@@ -108,137 +163,193 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.4);
+            background-color: rgba(0,0,0,0.7);
         }
+        
         .modal-content {
-            background-color: #fefefe;
+            background-color: #4E9986;
             margin: 10% auto;
             padding: 20px;
-            border: 1px solid #888;
+            border: 1px solid white;
             width: 60%;
-            border-radius: 5px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
+        
         .close {
-            color: #aaa;
+            color: white;
             float: right;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
         }
+        
         .close:hover {
-            color: black;
+            color: #CCCCCC;
         }
+        
         .form-group {
             margin-bottom: 15px;
         }
+        
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            color: white;
         }
+        
         .form-group input[type="text"] {
             width: 100%;
             padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+            background-color: #3C7A6B;
+            border: 1px solid white;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
         }
+        
         .form-actions {
             text-align: right;
             margin-top: 20px;
+            border-top: 1px solid white;
+            padding-top: 15px;
         }
+        
         .form-actions button {
             padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
+            border: 1px solid white;
+            background-color: #4E9986;
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
             cursor: pointer;
         }
+        
         .save-btn {
-            background-color: #3498db;
-            color: white;
+            background-color: #81C7E8;
+            color: #333;
             margin-left: 10px;
         }
-        .cancel-btn {
-            background-color: #f2f2f2;
+        
+        .save-btn:hover {
+            background-color: #6DB5D6;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #3C7A6B;
+        }
+
+        /* Navigation tabs inspired by the numbered navigation in image */
+        .navigation {
+            display: flex;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .nav-item {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border: none;
+        }
+        
+        .nav-item:nth-child(1) {
+            background-color: #4E9986;
+            color: white;
+        }
+        
+        .nav-item:nth-child(2) {
+            background-color: #81C7E8;
+            color: #333;
+        }
+        
+        .nav-item:nth-child(3) {
+            background-color: #333333;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <h1>Bubble Radio Admin</h1>
-    
-    <p>
-        <a href="/demo" class="back-link">← Back to Stream List</a>
-    </p>
-    
-    <!-- Tab buttons -->
-    <div class="tabs">
+    <div class="terminal">
+        <div class="terminal-bar">
+            <span>BUBBLE RADIO ADMIN</span>
+            <span id="datetime">...</span>
+        </div>
+        
+        <p>
+            <a href="/demo" class="back-link">RETURN TO STREAM LIST</a>
+        </p>
+        
+        <!-- Tab buttons -->
+        <div class="tabs">
+            {% for playlist in playlists %}
+            <button class="tab-btn {% if loop.first %}active{% endif %}" onclick="openTab(event, '{{ playlist }}')">
+                {{ playlist }} <span class="song-count">[{{ playlist_songs[playlist]|default([])|length }}]</span>
+            </button>
+            {% endfor %}
+        </div>
+        
+        <!-- Tab content -->
         {% for playlist in playlists %}
-        <button class="tab-btn {% if loop.first %}active{% endif %}" onclick="openTab(event, '{{ playlist }}')">
-            {{ playlist }} <span class="song-count">({{ playlist_songs[playlist]|default([])|length }})</span>
-        </button>
+        <div id="{{ playlist }}" class="tab-content {% if loop.first %}active{% endif %}">
+            <h2>{{ playlist }}</h2>
+            
+            {% if playlist_songs[playlist] %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>TITLE</th>
+                        <th>ADDED BY</th>
+                        <th>DATE ADDED</th>
+                        <th>SOURCE</th>
+                        <th>OPERATIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for song in playlist_songs[playlist] %}
+                    <tr data-id="{{ song['id'] }}">
+                        <td>{{ song['title'] }}</td>
+                        <td>{{ song['username'] }}</td>
+                        <td>{{ song['timestamp'] }}</td>
+                        <td><a href="{{ song['url'] }}" target="_blank" style="color: white;">VIEW SOURCE</a></td>
+                        <td>
+                            <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">EDIT</button>
+                            <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DELETE</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>NO RECORDS FOUND FOR THIS PLAYLIST</p>
+            {% endif %}
+        </div>
         {% endfor %}
     </div>
     
-    <!-- Tab content -->
-    {% for playlist in playlists %}
-    <div id="{{ playlist }}" class="tab-content {% if loop.first %}active{% endif %}">
-        <h2>{{ playlist }}</h2>
-        
-        {% if playlist_songs[playlist] %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Added By</th>
-                    <th>Date Added</th>
-                    <th>Source</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for song in playlist_songs[playlist] %}
-                <tr data-id="{{ song['id'] }}">
-                    <td>{{ song['title'] }}</td>
-                    <td>{{ song['username'] }}</td>
-                    <td>{{ song['timestamp'] }}</td>
-                    <td><a href="{{ song['url'] }}" target="_blank">Original Source</a></td>
-                    <td>
-                        <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">Edit</button>
-                        <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">Delete</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>No songs found for this playlist.</p>
-        {% endif %}
-    </div>
-    {% endfor %}
-    
     <!-- Edit Modal -->
     <div id="editModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Edit Song</h2>
+        <div class="modal-content terminal">
+            <div class="terminal-bar">
+                <span>EDIT RECORD</span>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <h2>MODIFY DATABASE ENTRY</h2>
             <form id="editForm">
                 <input type="hidden" id="songId" name="id">
                 <div class="form-group">
-                    <label for="title">Title:</label>
+                    <label for="title">TITLE:</label>
                     <input type="text" id="songTitle" name="title" required>
                 </div>
                 <div class="form-group">
-                    <label for="username">Added By:</label>
+                    <label for="username">ADDED BY:</label>
                     <input type="text" id="songUsername" name="username" required>
                 </div>
                 <div class="form-group">
-                    <label for="url">Source URL:</label>
+                    <label for="url">SOURCE URL:</label>
                     <input type="text" id="songUrl" name="url" required>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="button" class="save-btn" onclick="saveSong()">Save Changes</button>
+                    <button type="button" class="cancel-btn" onclick="closeModal()">CANCEL</button>
+                    <button type="button" class="save-btn" onclick="saveSong()">SAVE</button>
                 </div>
             </form>
         </div>
@@ -246,20 +357,32 @@
 
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeDeleteModal()">&times;</span>
-            <h2>Confirm Deletion</h2>
-            <p>Are you sure you want to delete the song: <strong id="deleteTitle"></strong>?</p>
-            <p>This action cannot be undone.</p>
+        <div class="modal-content terminal">
+            <div class="terminal-bar">
+                <span>WARNING</span>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <h2>CONFIRM DELETION</h2>
+            <p>DELETE RECORD: <strong id="deleteTitle"></strong>?</p>
+            <p style="color: #ffcccc;">THIS OPERATION CANNOT BE REVERSED</p>
             <div class="form-actions">
-                <button type="button" class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
-                <button type="button" class="delete-btn" onclick="deleteSong()">Delete</button>
+                <button type="button" class="cancel-btn" onclick="closeDeleteModal()">CANCEL</button>
+                <button type="button" class="delete-btn" onclick="deleteSong()">DELETE</button>
             </div>
             <input type="hidden" id="deleteId">
         </div>
     </div>
     
     <script>
+        // Display date and time
+        function updateDateTime() {
+            var now = new Date();
+            var dateStr = now.toISOString().replace('T', ' ').substring(0, 19);
+            document.getElementById('datetime').textContent = dateStr;
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
         // Tab switching function
         function openTab(evt, tabName) {
             // Hide all tab content
@@ -304,16 +427,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    alert("Song updated successfully");
+                    alert("RECORD UPDATED SUCCESSFULLY");
                     window.location.reload(); // Reload to show updated data
                 } else {
-                    alert("Error: " + data.message);
+                    alert("ERROR: " + data.message);
                 }
                 closeModal();
             })
             .catch(error => {
                 console.error("Error:", error);
-                alert("An error occurred while saving");
+                alert("ERROR: OPERATION FAILED");
                 closeModal();
             });
         }
@@ -343,16 +466,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    alert("Song deleted successfully");
+                    alert("RECORD DELETED SUCCESSFULLY");
                     window.location.reload(); // Reload to show updated data
                 } else {
-                    alert("Error: " + data.message);
+                    alert("ERROR: " + data.message);
                 }
                 closeDeleteModal();
             })
             .catch(error => {
                 console.error("Error:", error);
-                alert("An error occurred while deleting");
+                alert("ERROR: OPERATION FAILED");
                 closeDeleteModal();
             });
         }
