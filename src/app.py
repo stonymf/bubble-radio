@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from src.downloader import download_audio
 import requests
-from flask import Flask, render_template, jsonify, request, redirect, url_for, Response, send_file
+from flask import Flask, render_template, jsonify, request, redirect, url_for, Response, send_file, send_from_directory
 from urllib.parse import unquote
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
@@ -364,16 +364,79 @@ def download_playlist(playlist_name):
         
         zip_buffer.seek(0)
         
-        # Return the ZIP file with the playlist name as the filename
+        # Generate timestamp for the filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Return the ZIP file with a timestamped name
         return send_file(
             zip_buffer, 
             mimetype='application/zip',
             as_attachment=True, 
-            download_name=f"{playlist_name}.zip"
+            download_name=f"corecore_{timestamp}.zip"
         )
     except Exception as e:
         logger.error(f"Error creating playlist ZIP: {e}")
         return "Error creating playlist ZIP", 500
+
+@app.route("/feedthechao")
+def feed_the_chao():
+    # First show the page with the GIF
+    return render_template("download.html")
+
+@app.route("/download_archive")
+def download_all_playlists():
+    try:
+        # Get all unique emoji names
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT emoji_name FROM downloads")
+        emoji_names = [row[0] for row in cursor.fetchall()]
+        
+        if not emoji_names:
+            return "No playlists found", 404
+        
+        # Create a ZIP file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # For each emoji/playlist
+            for emoji_name in emoji_names:
+                # Get all songs for this playlist
+                cursor.execute("SELECT id, title, filename FROM downloads WHERE emoji_name = ?", (emoji_name,))
+                songs = cursor.fetchall()
+                
+                # Create a folder for each playlist
+                for song_id, title, filename in songs:
+                    file_path = os.path.join("/usr/src/app/downloads", filename)
+                    if os.path.exists(file_path):
+                        # Add the file to the ZIP in a folder named after the playlist
+                        zipf.write(file_path, arcname=f"{emoji_name}/{filename}")
+                    else:
+                        logger.warning(f"File not found for song {title}: {file_path}")
+        
+        conn.close()
+        zip_buffer.seek(0)
+        
+        # Generate timestamp for the filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Return the ZIP file with a timestamped name
+        return send_file(
+            zip_buffer, 
+            mimetype='application/zip',
+            as_attachment=True, 
+            download_name=f"corecore_{timestamp}.zip"
+        )
+    except Exception as e:
+        logger.error(f"Error creating complete archive ZIP: {e}")
+        return "Error creating archive", 500
+
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory("static", filename)
+
+@app.route("/src/img/<path:filename>")
+def serve_image(filename):
+    return send_from_directory(os.path.join(os.path.dirname(__file__), "img"), filename)
 
 if __name__ == "__main__":
     start_scheduling()

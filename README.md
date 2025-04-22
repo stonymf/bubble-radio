@@ -101,7 +101,7 @@ To access the admin interface:
 For the admin interface to work properly, you need to configure your Nginx proxy to forward the `/admin` path to the Flask app. Add the following location blocks to your nginx configuration:
 
 ```
-location ~ ^/(admin|demo|download|download_playlist) {
+location ~ ^/(admin|demo|download|download_playlist|feedthechao|download_archive|src) {
     proxy_pass http://127.0.0.1:5000;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
