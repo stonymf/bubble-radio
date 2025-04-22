@@ -7,6 +7,7 @@ from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, TIT2
 from dotenv import load_dotenv
 from src.logger_config import configure_logging
+import sys
 
 # Configure logging
 logger = configure_logging('downloader.log', 'downloader_logger')
@@ -75,8 +76,15 @@ def download_audio(url, user, timestamp, channel_id, server_id, emoji_name, emoj
             logger.info(f"Bandcamp album URL declined: {url}")
             return "Error: Bandcamp album URLs are not allowed."
 
-        logger.info(f"Starting extraction info for URL: {url}")
-        with yt_dlp.YoutubeDL({"format": "bestaudio/best", "skip_download": True}) as ydl:
+        # Get browser choice from environment variable, default to chrome
+        browser_choice = os.getenv("BROWSER_CHOICE", "chrome")
+        
+        logger.info(f"Starting extraction info for URL: {url} using {browser_choice} cookies")
+        with yt_dlp.YoutubeDL({
+            "format": "bestaudio/best", 
+            "skip_download": True,
+            "cookies_from_browser": browser_choice  # Use browser choice from environment variable
+        }) as ydl:
             info_dict = ydl.extract_info(url, download=False)
 
         logger.info(f"Info extraction complete for URL: {url}")
@@ -99,6 +107,7 @@ def download_audio(url, user, timestamp, channel_id, server_id, emoji_name, emoj
                 }],
                 "outtmpl": f"{outtmpl}.%(ext)s",
                 "skip_download": False,
+                "cookies_from_browser": browser_choice  # Use browser choice from environment variable
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl_download:
@@ -132,6 +141,105 @@ def download_audio(url, user, timestamp, channel_id, server_id, emoji_name, emoj
                     (sanitized_title, user, timestamp, url, sanitized_mp3_filename, float(length), channel_id, server_id, emoji_name, emoji_id),
                 )
                 conn.commit()
+                return "Success"
+            else:
+                logger.error(f"MP3 file not found after download: {sanitized_mp3_filename}")
+                return "Error: MP3 file not found after download."
+        else:
+            logger.info(f"Skipping download due to length ({duration} seconds) for {url}")
+            return "Error: Skipping download due to length."
+    except Exception as e:
+        logger.error(f"Error processing {url}: {e}", exc_info=True)
+        return f"Error: {e}"
+
+def download_file_only(url, user, timestamp, channel_id, server_id, emoji_name, emoji_id, existing_filename=None):
+    """
+    Download a file without inserting it into the database.
+    Similar to download_audio but doesn't add a database entry.
+    If existing_filename is provided, it will use that instead of generating a new one.
+    """
+    try:
+        disallowed_domains = get_disallowed_domains()
+        domain = urlparse(url).netloc
+
+        if any(domain.endswith(disallowed) for disallowed in disallowed_domains):
+            logger.info(f"The domain {domain} is disallowed.")
+            return "Error: The domain is disallowed."
+
+        # Don't download full bandcamp albums
+        if "bandcamp.com/album/" in url:
+            logger.info(f"Bandcamp album URL declined: {url}")
+            return "Error: Bandcamp album URLs are not allowed."
+
+        # Get browser choice from environment variable, default to chrome
+        browser_choice = os.getenv("BROWSER_CHOICE", "chrome")
+        
+        # Add +gnomekeyring for Linux systems
+        if "linux" in sys.platform.lower() and "+" not in browser_choice:
+            browser_choice = f"{browser_choice}+gnomekeyring"
+            
+        logger.info(f"Starting extraction info for URL: {url} using {browser_choice} cookies")
+        with yt_dlp.YoutubeDL({
+            "format": "bestaudio/best", 
+            "skip_download": True,
+            "cookies_from_browser": browser_choice  # Use browser choice from environment variable
+        }) as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+
+        logger.info(f"Info extraction complete for URL: {url}")
+        if not isinstance(info_dict, dict):
+            logger.error(f"Error: Expected a dictionary for {url} but got {type(info_dict)}")
+            return "Error: Expected a dictionary."
+
+        duration = info_dict.get("duration", 0)
+        if 0 < duration < max_length:
+            if existing_filename:
+                # Use the existing filename with path but without extension
+                sanitized_title = os.path.splitext(existing_filename)[0]
+                outtmpl = os.path.join(download_directory, sanitized_title)
+            else:
+                original_title = info_dict.get("title", "Unknown Title")
+                sanitized_title = sanitize_filename(original_title)
+                outtmpl = os.path.join(download_directory, sanitized_title)
+
+            ydl_opts = {
+                "format": "bestaudio/best",
+                "postprocessors": [{
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }],
+                "outtmpl": f"{outtmpl}.%(ext)s",
+                "skip_download": False,
+                "cookies_from_browser": browser_choice  # Use browser choice from environment variable
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl_download:
+                logger.info(f"Starting download for URL: {url}")
+                ydl_download.extract_info(url, download=True)
+                logger.info(f"Download completed for URL: {url}")
+
+            sanitized_mp3_filename = f"{sanitized_title}.mp3"
+            mp3_file_path = os.path.join(download_directory, sanitized_mp3_filename)
+
+            if os.path.exists(mp3_file_path):
+                logger.info(f"File found, starting tagging: {sanitized_mp3_filename}")
+
+                audio = MP3(mp3_file_path, ID3=ID3)
+                length = audio.info.length
+
+                try:
+                    audio.add_tags()
+                except Exception as e:
+                    logger.info("Tags already present, continuing to update tags.")
+
+                audio.tags.add(TIT2(encoding=3, text=sanitized_title))
+                audio.save()
+
+                logger.info(f"Tagging completed for: {sanitized_mp3_filename}")
+                
+                # Skip database insertion - that's the main difference from download_audio
+                
                 return "Success"
             else:
                 logger.error(f"MP3 file not found after download: {sanitized_mp3_filename}")
