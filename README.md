@@ -25,7 +25,7 @@ Below is a template. Use absolute paths wherever filepaths are required.
 # maximum length in seconds above which songs will not be downloaded
 MAX_LENGTH=4140
 
-# number of most recent songs to include in _recent playlists
+# number of songs to include in each playlist
 RECENT_SONG_COUNT=100
 
 # where you want audio files to be downloaded
@@ -76,7 +76,7 @@ You can try sending a test POST request with `python src/test_post_request.py <a
 
 If a success status is returned, the song should now be in the downloads directory you specified in the `.env` file.
 
-Playlists will periodically (at a frequency equal to each respective playlist's length) generate playlist files according to the emoji/react that the downloaded songs originated from. These playlists will show up in `/playlists`.
+Playlists will periodically (at a frequency equal to each respective playlist's length) generate playlist files according to the emoji/react that the downloaded songs originated from. Each playlist contains the most recent songs (limited by RECENT_SONG_COUNT) in randomized order. These playlists will show up in `/playlists`.
 
 Your streams should be listenable at `https://stream.yoururl.com/<playlist_name>` (provided you have created the subdomain `stream` and routed it to your RADIO_PORT) and you should also be able to view the basic frontend by visiting `https://stream.yoururl.com/demo`
 
@@ -88,6 +88,10 @@ Bubble Radio includes an admin interface that allows you to:
 - Delete songs (which also removes the associated audio file)
 - Download individual songs directly from the interface
 - Download entire playlists as zip files with a single click
+
+The admin interface is organized with tabs for each station, and each station has two views:
+- "All" - showing all songs associated with that station
+- "Playlist" - showing only the songs currently included in the playlist, in playlist order
 
 To access the admin interface:
 1. Visit `https://stream.yoururl.com/admin`
@@ -112,6 +116,23 @@ location /get_original_url {
     proxy_set_header X-Forwarded-Proto $scheme;
 }
 ```
+
+### Utility Scripts
+
+Bubble Radio includes utility scripts to help with maintenance:
+
+#### Download All Songs
+The `download_all_songs.sh` script helps you download all songs that exist in the database but are missing from the download directory. This is useful when setting up a new instance or recovering from data loss.
+
+To use it:
+```bash
+./download_all_songs.sh
+```
+
+The script uses smart timing with variable delays to avoid triggering YouTube's bot detection:
+- 7-15 second random delay between downloads
+- A longer 60-second break after every 5 downloads
+- Browser cookies for authentication
 
 ### How to live stream to the live mountpoint
 
