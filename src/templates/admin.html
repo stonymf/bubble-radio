@@ -297,7 +297,10 @@
         <!-- Tab content -->
         {% for playlist in playlists %}
         <div id="{{ playlist }}" class="tab-content {% if loop.first %}active{% endif %}">
-            <h2>{{ playlist }}</h2>
+            <h2>
+                {{ playlist }}
+                <a href="/download_playlist/{{ playlist }}" class="action-btn download-btn" style="margin-left: 5px; vertical-align: middle; font-size: 0.6em;">DL</a>
+            </h2>
             
             {% if playlist_songs[playlist] %}
             <table>

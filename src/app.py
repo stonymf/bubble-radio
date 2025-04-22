@@ -2,6 +2,8 @@ import os
 import json
 import sqlite3
 import html
+import io
+import zipfile
 from functools import wraps
 from urllib.parse import urlparse
 from dotenv import load_dotenv
@@ -327,6 +329,51 @@ def download(song_id):
     except Exception as e:
         logger.error(f"Error downloading file: {e}")
         return "Error processing download request", 500
+
+@app.route("/download_playlist/<playlist_name>")
+@requires_auth
+def download_playlist(playlist_name):
+    try:
+        # Parse the playlist name to extract emoji_name
+        parts = playlist_name.split('_')
+        if len(parts) < 1:
+            return "Invalid playlist name", 400
+        
+        emoji_name = parts[0]  # Extract emoji_name from playlist name
+        
+        # Get songs for the specified playlist
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, title, filename FROM downloads WHERE emoji_name = ?", (emoji_name,))
+        songs = cursor.fetchall()
+        conn.close()
+        
+        if not songs:
+            return "No songs found for this playlist", 404
+        
+        # Create a ZIP file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for song_id, title, filename in songs:
+                file_path = os.path.join("/usr/src/app/downloads", filename)
+                if os.path.exists(file_path):
+                    # Add the file to the ZIP
+                    zipf.write(file_path, arcname=filename)
+                else:
+                    logger.warning(f"File not found for song {title}: {file_path}")
+        
+        zip_buffer.seek(0)
+        
+        # Return the ZIP file with the playlist name as the filename
+        return send_file(
+            zip_buffer, 
+            mimetype='application/zip',
+            as_attachment=True, 
+            download_name=f"{playlist_name}.zip"
+        )
+    except Exception as e:
+        logger.error(f"Error creating playlist ZIP: {e}")
+        return "Error creating playlist ZIP", 500
 
 if __name__ == "__main__":
     start_scheduling()
