@@ -438,6 +438,60 @@ def serve_static(filename):
 def serve_image(filename):
     return send_from_directory(os.path.join(os.path.dirname(__file__), "img"), filename)
 
+@app.route("/download_db")
+@requires_auth
+def download_db():
+    try:
+        # Connect to the database
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row  # This enables column access by name
+        cursor = conn.cursor()
+        
+        # Get all tables in the database
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = cursor.fetchall()
+        
+        # Create a dictionary to hold our database export
+        database_export = {}
+        
+        # For each table, get all rows and add to the export
+        for table in tables:
+            table_name = table['name']
+            cursor.execute(f"SELECT * FROM {table_name}")
+            rows = cursor.fetchall()
+            
+            # Convert rows to list of dictionaries
+            table_data = []
+            for row in rows:
+                row_dict = {key: row[key] for key in row.keys()}
+                table_data.append(row_dict)
+            
+            database_export[table_name] = table_data
+        
+        conn.close()
+        
+        # Generate timestamp for the filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Create a JSON string from the dictionary
+        json_str = json.dumps(database_export, indent=4)
+        
+        # Create a BytesIO object
+        mem = io.BytesIO()
+        mem.write(json_str.encode('utf-8'))
+        mem.seek(0)
+        
+        # Return the JSON file
+        return send_file(
+            mem,
+            mimetype='application/json',
+            as_attachment=True,
+            download_name=f"bubble_radio_db_{timestamp}.json"
+        )
+    except Exception as e:
+        logger.error(f"Error exporting database: {e}")
+        return "Error exporting database", 500
+
 if __name__ == "__main__":
     start_scheduling()
     app.run(debug=True, host="0.0.0.0", port=5000)

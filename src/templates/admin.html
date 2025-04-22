@@ -281,11 +281,13 @@
             <span id="datetime">...</span>
         </div>
         
-        <p>
+        <p style="display: flex; justify-content: space-between; align-items: center;">
             <a href="/demo" class="back-link">RETURN TO STREAM LIST</a>
+            <a href="/download_db" class="action-btn download-btn">DOWNLOAD DB BACKUP</a>
         </p>
         
         <!-- Tab buttons -->
+         <h3> Stations: </h3>
         <div class="tabs">
             {% for playlist in playlists %}
             <button class="tab-btn {% if loop.first %}active{% endif %}" onclick="openTab(event, '{{ playlist }}')">
