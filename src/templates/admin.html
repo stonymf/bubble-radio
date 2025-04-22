@@ -82,6 +82,86 @@
             font-size: 0.8em;
             margin-left: 10px;
         }
+        .action-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 5px;
+            font-size: 12px;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+        }
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-actions {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .form-actions button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .save-btn {
+            background-color: #3498db;
+            color: white;
+            margin-left: 10px;
+        }
+        .cancel-btn {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -113,15 +193,20 @@
                     <th>Added By</th>
                     <th>Date Added</th>
                     <th>Source</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for song in playlist_songs[playlist] %}
-                <tr>
+                <tr data-id="{{ song['id'] }}">
                     <td>{{ song['title'] }}</td>
                     <td>{{ song['username'] }}</td>
                     <td>{{ song['timestamp'] }}</td>
                     <td><a href="{{ song['url'] }}" target="_blank">Original Source</a></td>
+                    <td>
+                        <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">Edit</button>
+                        <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">Delete</button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -132,7 +217,50 @@
     </div>
     {% endfor %}
     
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Edit Song</h2>
+            <form id="editForm">
+                <input type="hidden" id="songId" name="id">
+                <div class="form-group">
+                    <label for="title">Title:</label>
+                    <input type="text" id="songTitle" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="username">Added By:</label>
+                    <input type="text" id="songUsername" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="url">Source URL:</label>
+                    <input type="text" id="songUrl" name="url" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="button" class="save-btn" onclick="saveSong()">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete the song: <strong id="deleteTitle"></strong>?</p>
+            <p>This action cannot be undone.</p>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="delete-btn" onclick="deleteSong()">Delete</button>
+            </div>
+            <input type="hidden" id="deleteId">
+        </div>
+    </div>
+    
     <script>
+        // Tab switching function
         function openTab(evt, tabName) {
             // Hide all tab content
             var tabContent = document.getElementsByClassName("tab-content");
@@ -149,6 +277,117 @@
             // Show the selected tab content and mark the button as active
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
+        }
+        
+        // Edit functions
+        var editModal = document.getElementById("editModal");
+        
+        function openEditModal(id, title, username, url) {
+            document.getElementById("songId").value = id;
+            document.getElementById("songTitle").value = title;
+            document.getElementById("songUsername").value = username;
+            document.getElementById("songUrl").value = url;
+            editModal.style.display = "block";
+        }
+        
+        function closeModal() {
+            editModal.style.display = "none";
+        }
+        
+        function saveSong() {
+            var formData = new FormData(document.getElementById("editForm"));
+            
+            fetch("/admin/edit_song", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    alert("Song updated successfully");
+                    window.location.reload(); // Reload to show updated data
+                } else {
+                    alert("Error: " + data.message);
+                }
+                closeModal();
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while saving");
+                closeModal();
+            });
+        }
+        
+        // Delete functions
+        var deleteModal = document.getElementById("deleteModal");
+        
+        function confirmDelete(id, title) {
+            document.getElementById("deleteId").value = id;
+            document.getElementById("deleteTitle").textContent = title;
+            deleteModal.style.display = "block";
+        }
+        
+        function closeDeleteModal() {
+            deleteModal.style.display = "none";
+        }
+        
+        function deleteSong() {
+            var id = document.getElementById("deleteId").value;
+            var formData = new FormData();
+            formData.append("id", id);
+            
+            fetch("/admin/delete_song", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    alert("Song deleted successfully");
+                    window.location.reload(); // Reload to show updated data
+                } else {
+                    alert("Error: " + data.message);
+                }
+                closeDeleteModal();
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while deleting");
+                closeDeleteModal();
+            });
+        }
+        
+        // Setup event listeners for edit and delete buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Edit button event listeners
+            document.querySelectorAll('.edit-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var id = this.getAttribute('data-id');
+                    var title = this.getAttribute('data-title');
+                    var username = this.getAttribute('data-username');
+                    var url = this.getAttribute('data-url');
+                    openEditModal(id, title, username, url);
+                });
+            });
+            
+            // Delete button event listeners
+            document.querySelectorAll('.delete-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var id = this.getAttribute('data-id');
+                    var title = this.getAttribute('data-title');
+                    confirmDelete(id, title);
+                });
+            });
+        });
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target == editModal) {
+                closeModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
         }
     </script>
 </body>

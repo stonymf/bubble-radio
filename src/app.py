@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from src.downloader import download_audio
 import requests
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 from urllib.parse import unquote
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
@@ -178,7 +178,7 @@ def admin():
             
             # Query to get songs for this playlist's emoji
             cursor.execute("""
-                SELECT title, url, username, timestamp 
+                SELECT id, title, url, username, timestamp 
                 FROM downloads 
                 WHERE emoji_name = ? 
                 ORDER BY timestamp DESC
@@ -190,6 +190,93 @@ def admin():
     conn.close()
     
     return render_template("admin.html", playlists=playlists, playlist_songs=playlist_songs)
+
+@app.route("/admin/edit_song", methods=['POST'])
+def edit_song():
+    song_id = request.form.get('id')
+    title = request.form.get('title')
+    username = request.form.get('username')
+    url = request.form.get('url')
+    
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE downloads 
+            SET title = ?, username = ?, url = ? 
+            WHERE id = ?
+        """, (title, username, url, song_id))
+        conn.commit()
+        
+        # Also update the MP3 file title if possible (optional)
+        cursor.execute("SELECT filename FROM downloads WHERE id = ?", (song_id,))
+        filename = cursor.fetchone()
+        if filename:
+            try:
+                import os
+                from mutagen.mp3 import MP3
+                from mutagen.id3 import ID3, TIT2
+                mp3_path = os.path.join("/usr/src/app/downloads", filename[0])
+                if os.path.exists(mp3_path):
+                    audio = MP3(mp3_path, ID3=ID3)
+                    audio.tags.add(TIT2(encoding=3, text=title))
+                    audio.save()
+                    logger.info(f"Updated MP3 tag for file: {filename[0]}")
+            except Exception as e:
+                logger.error(f"Error updating MP3 tag: {e}")
+        
+        # Trigger playlist refresh to reflect changes
+        cursor.execute("SELECT emoji_id, emoji_name FROM downloads WHERE id = ?", (song_id,))
+        emoji_info = cursor.fetchone()
+        if emoji_info:
+            emoji_id, emoji_name = emoji_info
+            # Schedule playlist refresh for this emoji
+            schedule_playlist_refresh(emoji_id, emoji_name, False)  # all-time playlist
+            schedule_playlist_refresh(emoji_id, emoji_name, True)   # recent playlist
+        
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Error updating song: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/admin/delete_song", methods=['POST'])
+def delete_song():
+    song_id = request.form.get('id')
+    
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Get emoji and filename info before deletion
+        cursor.execute("SELECT emoji_id, emoji_name, filename FROM downloads WHERE id = ?", (song_id,))
+        result = cursor.fetchone()
+        if result:
+            emoji_id, emoji_name, filename = result
+            
+            # Delete record from database
+            cursor.execute("DELETE FROM downloads WHERE id = ?", (song_id,))
+            conn.commit()
+            
+            # Remove MP3 file if possible (optional)
+            try:
+                import os
+                mp3_path = os.path.join("/usr/src/app/downloads", filename)
+                if os.path.exists(mp3_path):
+                    os.remove(mp3_path)
+                    logger.info(f"Deleted MP3 file: {filename}")
+            except Exception as e:
+                logger.error(f"Error deleting MP3 file: {e}")
+            
+            # Trigger playlist refresh to reflect changes
+            schedule_playlist_refresh(emoji_id, emoji_name, False)  # all-time playlist
+            schedule_playlist_refresh(emoji_id, emoji_name, True)   # recent playlist
+        
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Error deleting song: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
     start_scheduling()
