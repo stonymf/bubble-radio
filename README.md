@@ -91,6 +91,8 @@ Bubble Radio includes an admin interface that allows you to:
 - View all songs in each playlist
 - Edit song metadata (title, username, source URL)
 - Delete songs (which also removes the associated audio file)
+- Download individual songs directly from the interface
+- Download entire playlists as zip files with a single click
 
 To access the admin interface:
 1. Visit `https://stream.yoururl.com/admin`
@@ -99,7 +101,7 @@ To access the admin interface:
 For the admin interface to work properly, you need to configure your Nginx proxy to forward the `/admin` path to the Flask app. Add the following location blocks to your nginx configuration:
 
 ```
-location ~ ^/(admin|demo) {
+location ~ ^/(admin|demo|download|download_playlist) {
     proxy_pass http://127.0.0.1:5000;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
