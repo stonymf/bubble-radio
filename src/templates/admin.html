@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bubble Radio Admin Terminal</title>
+    <title>Bubble Radio Admin</title>
     <meta charset="UTF-8">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         
         body {
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Arial Narrow', 'Arial Condensed', Arial, sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #4E9986;
@@ -36,7 +35,7 @@
         h1 {
             color: white;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             font-size: 20px;
             margin: 0;
             padding: 15px 0;
@@ -44,42 +43,87 @@
             border-bottom: 1px solid white;
         }
         
-        /* Tab styles */
-        .tabs {
+        h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        /* Main tabs styles */
+        .main-tabs {
             display: flex;
             flex-wrap: wrap;
             margin-top: 20px;
             border-bottom: 1px solid white;
         }
         
-        .tab-btn {
+        .main-tab-btn {
             border: 1px solid white;
             border-bottom: none;
             padding: 8px 15px;
             background: #4E9986;
             cursor: pointer;
             margin-right: 5px;
-            font-size: 14px;
-            font-family: 'IBM Plex Mono', monospace;
+            font-size: 18px;
+            font-family: 'Roboto Condensed', 'Arial Narrow', 'Arial Condensed', Arial, sans-serif;
             color: white;
         }
         
-        .tab-btn:hover {
+        .main-tab-btn:hover {
             background: #3C7A6B;
         }
         
-        .tab-btn.active {
+        .main-tab-btn.active {
             background: #81C7E8;
             border-color: white;
             color: #333333;
         }
         
-        .tab-content {
+        .main-tab-content {
             display: none;
             padding: 20px 0;
         }
         
-        .tab-content.active {
+        .main-tab-content.active {
+            display: block;
+        }
+        
+        /* Sub tabs styles */
+        .sub-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.5);
+            padding-bottom: 10px;
+        }
+        
+        .sub-tab-btn {
+            border: none;
+            background: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 5px;
+            font-family: 'Roboto Condensed', 'Arial Narrow', 'Arial Condensed', Arial, sans-serif;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .sub-tab-btn:hover {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .sub-tab-btn.active {
+            color: white;
+            border-bottom: 2px solid white;
+            font-weight: bold;
+        }
+        
+        .sub-tab-content {
+            display: none;
+        }
+        
+        .sub-tab-content.active {
             display: block;
         }
         
@@ -89,6 +133,7 @@
             margin-top: 10px;
             margin-bottom: 30px;
             border: 1px solid white;
+            table-layout: fixed;
         }
         
         th, td {
@@ -96,6 +141,9 @@
             text-align: left;
             border-bottom: 1px solid white;
             border-right: 1px solid white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         th {
@@ -125,7 +173,7 @@
         .song-count {
             font-weight: normal;
             color: #E3E3E3;
-            font-size: 0.8em;
+            font-size: 1em;
             margin-left: 10px;
         }
         
@@ -137,7 +185,7 @@
             cursor: pointer;
             margin-right: 5px;
             font-size: 12px;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Roboto Condensed', 'Arial Narrow', 'Arial Condensed', Arial, sans-serif;
             text-decoration: none;
             display: inline-block;
         }
@@ -211,7 +259,7 @@
             background-color: #3C7A6B;
             border: 1px solid white;
             color: white;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Roboto Condensed', 'Arial Narrow', 'Arial Condensed', Arial, sans-serif;
         }
         
         .form-actions {
@@ -226,7 +274,7 @@
             border: 1px solid white;
             background-color: #4E9986;
             color: white;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Roboto Condensed', 'Arial Narrow', 'Arial Condensed', Arial, sans-serif;
             cursor: pointer;
         }
         
@@ -272,6 +320,32 @@
             background-color: #333333;
             color: white;
         }
+        
+        /* Column width classes */
+        .col-position {
+            width: 30px;
+        }
+        
+        .col-title {
+            width: auto; /* Flexible width */
+            min-width: 200px;
+        }
+        
+        .col-user {
+            width: 150px; /* Accommodates usernames up to ~30 chars */
+        }
+        
+        .col-date {
+            width: 160px; /* Fixed width for timestamps */
+        }
+        
+        .col-source {
+            width: 50px; /* Fixed width for "view" link */
+        }
+        
+        .col-operations {
+            width: 145px; /* Fixed width for action buttons */
+        }
     </style>
 </head>
 <body>
@@ -286,54 +360,102 @@
             <a href="/download_db" class="action-btn download-btn">DOWNLOAD DB BACKUP</a>
         </p>
         
-        <!-- Tab buttons -->
-         <h3> Stations: </h3>
-        <div class="tabs">
-            {% for playlist in playlists %}
-            <button class="tab-btn {% if loop.first %}active{% endif %}" onclick="openTab(event, '{{ playlist }}')">
-                {{ playlist }} <span class="song-count">[{{ playlist_songs[playlist]|default([])|length }}]</span>
+        <h3>Stations:</h3>
+        <!-- Main tabs for stations -->
+        <div class="main-tabs">
+            {% for station_name, station_data in stations.items() %}
+            <button class="main-tab-btn {% if loop.first %}active{% endif %}" onclick="openMainTab(event, '{{ station_name }}')">
+                {{ station_name }} <span class="song-count">[{{ station_data.all|length }}]</span>
             </button>
             {% endfor %}
         </div>
         
-        <!-- Tab content -->
-        {% for playlist in playlists %}
-        <div id="{{ playlist }}" class="tab-content {% if loop.first %}active{% endif %}">
-            <h2>
-                {{ playlist }}
-                <a href="/download_playlist/{{ playlist }}" class="action-btn download-btn" style="margin-left: 5px; vertical-align: middle; font-size: 0.6em;">DL</a>
-            </h2>
+        <!-- Station content tabs -->
+        {% for station_name, station_data in stations.items() %}
+        <div id="{{ station_name }}" class="main-tab-content {% if loop.first %}active{% endif %}">
+            <!-- Station header with download button -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2>{{ station_name }}</h2>
+                <a href="/download_playlist/{{ station_name }}" class="action-btn download-btn">DOWNLOAD PLAYLIST</a>
+            </div>
             
-            {% if playlist_songs[playlist] %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>TITLE</th>
-                        <th>ADDED BY</th>
-                        <th>DATE ADDED</th>
-                        <th>SOURCE</th>
-                        <th>OPERATIONS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for song in playlist_songs[playlist] %}
-                    <tr data-id="{{ song['id'] }}">
-                        <td>{{ song['title'] }}</td>
-                        <td>{{ song['username'] }}</td>
-                        <td>{{ song['timestamp'] }}</td>
-                        <td><a href="{{ song['url'] }}" target="_blank" style="color: white;">VIEW</a></td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">EDIT</button>
-                            <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DEL</button>
-                            <a href="/download/{{ song['id'] }}" class="action-btn download-btn" style="text-decoration: none; display: inline-block;">DL</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>NO RECORDS FOUND FOR THIS PLAYLIST</p>
-            {% endif %}
+            <!-- Sub tabs for different views -->
+            <div class="sub-tabs">
+                <button class="sub-tab-btn active" onclick="openSubTab(event, '{{ station_name }}-all')">All</button>
+                <button class="sub-tab-btn" onclick="openSubTab(event, '{{ station_name }}-playlist')">Playlist</button>
+            </div>
+            
+            <!-- All songs sub tab -->
+            <div id="{{ station_name }}-all" class="sub-tab-content active">
+                <h3>All Songs ({{ station_data.all|length }})</h3>
+                {% if station_data.all %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-title">TITLE</th>
+                            <th class="col-user">ADDED BY</th>
+                            <th class="col-date">DATE ADDED</th>
+                            <th class="col-source">SRC</th>
+                            <th class="col-operations">OPERATIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for song in station_data.all %}
+                        <tr data-id="{{ song['id'] }}">
+                            <td class="col-title">{{ song['title'] }}</td>
+                            <td class="col-user">{{ song['username'] }}</td>
+                            <td class="col-date">{{ song['timestamp'] }}</td>
+                            <td class="col-source"><a href="{{ song['url'] }}" target="_blank" style="color: white;">view</a></td>
+                            <td class="col-operations">
+                                <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">EDIT</button>
+                                <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DEL</button>
+                                <a href="/download/{{ song['id'] }}" class="action-btn download-btn">DL</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No songs found in this station.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Playlist sub tab -->
+            <div id="{{ station_name }}-playlist" class="sub-tab-content">
+                <h3>Current Playlist ({{ station_data.playlist|length }})</h3>
+                {% if station_data.playlist %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-position">#</th>
+                            <th class="col-title">TITLE</th>
+                            <th class="col-user">ADDED BY</th>
+                            <th class="col-date">DATE ADDED</th>
+                            <th class="col-source">SRC</th>
+                            <th class="col-operations">OPERATIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for song in station_data.playlist %}
+                        <tr data-id="{{ song['id'] }}">
+                            <td class="col-position">{{ loop.index }}</td>
+                            <td class="col-title">{{ song['title'] }}</td>
+                            <td class="col-user">{{ song['username'] }}</td>
+                            <td class="col-date">{{ song['timestamp'] }}</td>
+                            <td class="col-source"><a href="{{ song['url'] }}" target="_blank" style="color: white;">view</a></td>
+                            <td class="col-operations">
+                                <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">EDIT</button>
+                                <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DEL</button>
+                                <a href="/download/{{ song['id'] }}" class="action-btn download-btn">DL</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No playlist file found for this station.</p>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -396,21 +518,61 @@
         updateDateTime();
         setInterval(updateDateTime, 1000);
         
-        // Tab switching function
-        function openTab(evt, tabName) {
-            // Hide all tab content
-            var tabContent = document.getElementsByClassName("tab-content");
+        // Main tab switching function
+        function openMainTab(evt, stationName) {
+            // Hide all main tab content
+            var tabContent = document.getElementsByClassName("main-tab-content");
             for (var i = 0; i < tabContent.length; i++) {
                 tabContent[i].classList.remove("active");
             }
             
-            // Remove active class from all tab buttons
-            var tabButtons = document.getElementsByClassName("tab-btn");
+            // Remove active class from all main tab buttons
+            var tabButtons = document.getElementsByClassName("main-tab-btn");
             for (var i = 0; i < tabButtons.length; i++) {
                 tabButtons[i].classList.remove("active");
             }
             
             // Show the selected tab content and mark the button as active
+            document.getElementById(stationName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+            
+            // By default, show the first sub-tab
+            var subTabs = document.getElementById(stationName).getElementsByClassName("sub-tab-content");
+            if (subTabs.length > 0) {
+                for (var i = 0; i < subTabs.length; i++) {
+                    subTabs[i].classList.remove("active");
+                }
+                subTabs[0].classList.add("active");
+                
+                // Mark the first sub-tab button as active
+                var subButtons = document.getElementById(stationName).getElementsByClassName("sub-tab-btn");
+                for (var i = 0; i < subButtons.length; i++) {
+                    subButtons[i].classList.remove("active");
+                }
+                if (subButtons.length > 0) {
+                    subButtons[0].classList.add("active");
+                }
+            }
+        }
+        
+        // Sub tab switching function
+        function openSubTab(evt, tabName) {
+            // Find the parent station container
+            var parentStation = evt.currentTarget.closest(".main-tab-content");
+            
+            // Hide all sub tab content in this station
+            var subTabs = parentStation.getElementsByClassName("sub-tab-content");
+            for (var i = 0; i < subTabs.length; i++) {
+                subTabs[i].classList.remove("active");
+            }
+            
+            // Remove active class from all sub tab buttons
+            var subButtons = parentStation.getElementsByClassName("sub-tab-btn");
+            for (var i = 0; i < subButtons.length; i++) {
+                subButtons[i].classList.remove("active");
+            }
+            
+            // Show the selected sub tab content and mark the button as active
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
         }

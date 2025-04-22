@@ -43,7 +43,7 @@ PLAYLIST_DIR="/usr/src/app/playlists"
 DB_PATH="/usr/src/app/db.db"
 
 # Query the database for the count of unique emoji_id and emoji_name combinations
-EXPECTED_PLAYLISTS=$(($(/usr/bin/sqlite3 $DB_PATH "SELECT COUNT(DISTINCT emoji_id || '-' || emoji_name) FROM downloads;") * 2))
+EXPECTED_PLAYLISTS=$(/usr/bin/sqlite3 $DB_PATH "SELECT COUNT(DISTINCT emoji_id || '-' || emoji_name) FROM downloads;")
 
 echo "Waiting for $EXPECTED_PLAYLISTS playlists to be created..."
 

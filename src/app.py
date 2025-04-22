@@ -47,17 +47,17 @@ def requires_auth(f):
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-def schedule_playlist_refresh(emoji_id, emoji_name, recent=False):
+def schedule_playlist_refresh(emoji_id, emoji_name):
     # Generate the playlist and get its total runtime
-    total_length = playlists.generate_playlist(emoji_id, emoji_name, recent)
+    total_length = playlists.generate_playlist(emoji_id, emoji_name)
     # Calculate the refresh interval based on total runtime
     refresh_interval = total_length 
     # Schedule the next refresh
-    scheduler.add_job(schedule_playlist_refresh, 'date', run_date=datetime.now() + timedelta(seconds=refresh_interval), args=[emoji_id, emoji_name, recent])
+    scheduler.add_job(schedule_playlist_refresh, 'date', run_date=datetime.now() + timedelta(seconds=refresh_interval), args=[emoji_id, emoji_name])
 
     minutes, seconds = divmod(refresh_interval, 60)
     
-    logger.info(f"Playlist for {emoji_name} ({'recent' if recent else 'all'}) created. Next refresh in {minutes} minutes and {seconds} seconds.")
+    logger.info(f"Playlist for {emoji_name} created. Next refresh in {minutes} minutes and {seconds} seconds.")
 
 def start_scheduling():
     logger.info("Starting scheduling...")
@@ -69,9 +69,8 @@ def start_scheduling():
         server_inputs = cursor.fetchall()
         logger.info(f"Found {len(server_inputs)} unique emoji_id and emoji_name combinations.")
         for emoji_id, emoji_name in server_inputs:
-            # Schedule both all-time and recent playlists for each unique combination
-            schedule_playlist_refresh(emoji_id, emoji_name, recent=False)
-            schedule_playlist_refresh(emoji_id, emoji_name, recent=True)
+            # Schedule playlist generation for each unique combination
+            schedule_playlist_refresh(emoji_id, emoji_name)
     except Exception as e:
         logger.error(f"Error occurred during scheduling: {e}")
     finally:
@@ -178,37 +177,65 @@ def index():
 @app.route("/admin")
 @requires_auth
 def admin():
-    # Get all playlists and sort them alphabetically
-    playlists = sorted([os.path.splitext(file)[0] for file in os.listdir(playlist_directory) if file.endswith('.m3u')])
-    
-    # Get songs for each playlist
-    playlist_songs = {}
-    
+    # Get all unique emoji names
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    for playlist_name in playlists:
-        # Extract emoji_name and whether it's recent or all
-        parts = playlist_name.split('_')
-        if len(parts) > 1:
-            emoji_name = parts[0]
-            playlist_type = parts[1]  # 'recent' or 'all'
+    cursor.execute("SELECT DISTINCT emoji_name FROM downloads")
+    emoji_names = [row['emoji_name'] for row in cursor.fetchall()]
+    emoji_names.sort()  # Sort alphabetically
+    
+    # Get the song count limit from .env
+    song_limit = int(os.getenv('RECENT_SONG_COUNT', '100'))
+    
+    # Organize data by emoji name
+    stations = {}
+    
+    for emoji_name in emoji_names:
+        # Get all songs for this emoji
+        cursor.execute("""
+            SELECT id, title, url, username, timestamp 
+            FROM downloads 
+            WHERE emoji_name = ? 
+            ORDER BY timestamp DESC
+        """, (emoji_name,))
+        all_songs = [dict(row) for row in cursor.fetchall()]
+        
+        # Get the actual playlist order from the m3u file
+        playlist = []
+        
+        # Try to read the playlist file
+        try:
+            playlist_path = os.path.join(playlist_directory, f"{emoji_name}.m3u")
             
-            # Query to get songs for this playlist's emoji
-            cursor.execute("""
-                SELECT id, title, url, username, timestamp 
-                FROM downloads 
-                WHERE emoji_name = ? 
-                ORDER BY timestamp DESC
-            """, (emoji_name,))
-            
-            songs = [dict(row) for row in cursor.fetchall()]
-            playlist_songs[playlist_name] = songs
+            if os.path.exists(playlist_path):
+                with open(playlist_path, 'r') as f:
+                    mp3_paths = f.read().splitlines()
+                    for mp3_path in mp3_paths:
+                        # Extract filename from path
+                        filename = os.path.basename(mp3_path)
+                        # Look up song details from the database
+                        cursor.execute("""
+                            SELECT id, title, url, username, timestamp 
+                            FROM downloads 
+                            WHERE filename = ?
+                        """, (filename,))
+                        song_data = cursor.fetchone()
+                        if song_data:
+                            playlist.append(dict(song_data))
+        except Exception as e:
+            logger.error(f"Error reading playlist for {emoji_name}: {e}")
+        
+        # Store all data for this emoji
+        stations[emoji_name] = {
+            'all': all_songs,
+            'playlist': playlist
+        }
     
     conn.close()
     
-    return render_template("admin.html", playlists=playlists, playlist_songs=playlist_songs)
+    return render_template("admin.html", stations=stations)
 
 @app.route("/admin/edit_song", methods=['POST'])
 @requires_auth
@@ -251,8 +278,7 @@ def edit_song():
         if emoji_info:
             emoji_id, emoji_name = emoji_info
             # Schedule playlist refresh for this emoji
-            schedule_playlist_refresh(emoji_id, emoji_name, False)  # all-time playlist
-            schedule_playlist_refresh(emoji_id, emoji_name, True)   # recent playlist
+            schedule_playlist_refresh(emoji_id, emoji_name)
         
         conn.close()
         return jsonify({"status": "success"})
@@ -290,8 +316,7 @@ def delete_song():
                 logger.error(f"Error deleting MP3 file: {e}")
             
             # Trigger playlist refresh to reflect changes
-            schedule_playlist_refresh(emoji_id, emoji_name, False)  # all-time playlist
-            schedule_playlist_refresh(emoji_id, emoji_name, True)   # recent playlist
+            schedule_playlist_refresh(emoji_id, emoji_name)
         
         conn.close()
         return jsonify({"status": "success"})
@@ -334,12 +359,8 @@ def download(song_id):
 @requires_auth
 def download_playlist(playlist_name):
     try:
-        # Parse the playlist name to extract emoji_name
-        parts = playlist_name.split('_')
-        if len(parts) < 1:
-            return "Invalid playlist name", 400
-        
-        emoji_name = parts[0]  # Extract emoji_name from playlist name
+        # Use playlist_name directly as emoji_name
+        emoji_name = playlist_name
         
         # Get songs for the specified playlist
         conn = sqlite3.connect(db_path)
@@ -372,7 +393,7 @@ def download_playlist(playlist_name):
             zip_buffer, 
             mimetype='application/zip',
             as_attachment=True, 
-            download_name=f"corecore_{timestamp}.zip"
+            download_name=f"{emoji_name}_{timestamp}.zip"
         )
     except Exception as e:
         logger.error(f"Error creating playlist ZIP: {e}")
@@ -400,8 +421,14 @@ def download_all_playlists():
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # For each emoji/playlist
             for emoji_name in emoji_names:
-                # Get all songs for this playlist
-                cursor.execute("SELECT id, title, filename FROM downloads WHERE emoji_name = ?", (emoji_name,))
+                # Get all songs for this playlist (limited to avoid huge archives)
+                cursor.execute("""
+                    SELECT id, title, filename 
+                    FROM downloads 
+                    WHERE emoji_name = ? 
+                    ORDER BY timestamp DESC 
+                    LIMIT 100
+                """, (emoji_name,))
                 songs = cursor.fetchall()
                 
                 # Create a folder for each playlist
@@ -424,7 +451,7 @@ def download_all_playlists():
             zip_buffer, 
             mimetype='application/zip',
             as_attachment=True, 
-            download_name=f"corecore_{timestamp}.zip"
+            download_name=f"bubble_radio_archive_{timestamp}.zip"
         )
     except Exception as e:
         logger.error(f"Error creating complete archive ZIP: {e}")
