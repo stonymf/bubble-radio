@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from src.downloader import download_audio
 import requests
-from flask import Flask, render_template, jsonify, request, redirect, url_for, Response
+from flask import Flask, render_template, jsonify, request, redirect, url_for, Response, send_file
 from urllib.parse import unquote
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
@@ -296,6 +296,37 @@ def delete_song():
     except Exception as e:
         logger.error(f"Error deleting song: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/download/<int:song_id>")
+@requires_auth
+def download(song_id):
+    try:
+        # Query the database to get the filename for the given song ID
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT filename FROM downloads WHERE id = ?", (song_id,))
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            filename = result[0]
+            # Use the container path for downloads directory
+            # In docker-compose.yml, DOWNLOAD_DIRECTORY is mapped to /usr/src/app/downloads
+            file_path = os.path.join("/usr/src/app/downloads", filename)
+            
+            logger.info(f"Attempting to download file: {file_path}")
+            
+            # Check if the file exists
+            if os.path.exists(file_path):
+                return send_file(file_path, as_attachment=True)
+            else:
+                logger.error(f"File not found at path: {file_path}")
+                return "File not found", 404
+        else:
+            return "Song not found", 404
+    except Exception as e:
+        logger.error(f"Error downloading file: {e}")
+        return "Error processing download request", 500
 
 if __name__ == "__main__":
     start_scheduling()

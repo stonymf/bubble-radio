@@ -138,6 +138,13 @@
             margin-right: 5px;
             font-size: 12px;
             font-family: 'IBM Plex Mono', monospace;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .download-btn {
+            background-color: #81C7E8;
+            color: #333;
         }
         
         .delete-btn {
@@ -309,10 +316,11 @@
                         <td>{{ song['title'] }}</td>
                         <td>{{ song['username'] }}</td>
                         <td>{{ song['timestamp'] }}</td>
-                        <td><a href="{{ song['url'] }}" target="_blank" style="color: white;">VIEW SOURCE</a></td>
+                        <td><a href="{{ song['url'] }}" target="_blank" style="color: white;">VIEW</a></td>
                         <td>
                             <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">EDIT</button>
-                            <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DELETE</button>
+                            <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DEL</button>
+                            <a href="/download/{{ song['id'] }}" class="action-btn download-btn" style="text-decoration: none; display: inline-block;">DL</a>
                         </td>
                     </tr>
                     {% endfor %}
