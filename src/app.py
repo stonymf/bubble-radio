@@ -4,6 +4,8 @@ import sqlite3
 import html
 import io
 import zipfile
+import threading
+import time
 from functools import wraps
 from urllib.parse import urlparse
 from dotenv import load_dotenv
@@ -16,6 +18,16 @@ from datetime import datetime, timedelta
 
 from src.logger_config import configure_logging
 import src.playlists as playlists
+
+# Global dictionary to store download progress
+download_progress = {
+    "status": "idle",  # idle, preparing, downloading, complete, error
+    "total_songs": 0,
+    "processed_songs": 0,
+    "current_playlist": "",
+    "timestamp": "",
+    "error": None
+}
 
 logger = configure_logging('app.log', 'app_logger')
 
@@ -401,61 +413,212 @@ def download_playlist(playlist_name):
 
 @app.route("/feedthechao")
 def feed_the_chao():
-    # First show the page with the GIF
+    """
+    Show the download page with progress bar.
+    The actual download will be initiated by client-side JavaScript.
+    """
+    # Reset progress state
+    global download_progress
+    download_progress = {
+        "status": "idle",
+        "total_songs": 0,
+        "processed_songs": 0,
+        "current_playlist": "",
+        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+        "error": None
+    }
+    
     return render_template("download.html")
+
+# ZIP creation in progress flag
+zip_creation_in_progress = False
+zip_buffer = None
+
+def create_archive_in_background():
+    """
+    Background thread function to create the ZIP archive.
+    Updates the global download_progress dictionary as it runs.
+    """
+    global download_progress, zip_creation_in_progress, zip_buffer
+    
+    try:
+        logger.info("Starting background ZIP creation process")
+        
+        # Get all playlist files
+        playlist_files = [f for f in os.listdir(playlist_directory) if f.endswith('.m3u')]
+        
+        if not playlist_files:
+            download_progress["status"] = "error"
+            download_progress["error"] = "No playlists found"
+            zip_creation_in_progress = False
+            logger.error("No playlist files found")
+            return
+        
+        # Get songs from each playlist file
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # First, count total songs from all playlists
+        total_songs = 0
+        playlist_songs = {}
+        
+        logger.info(f"Found {len(playlist_files)} playlist files, counting songs...")
+        
+        for playlist_file in playlist_files:
+            playlist_path = os.path.join(playlist_directory, playlist_file)
+            try:
+                with open(playlist_path, 'r') as f:
+                    mp3_paths = f.read().splitlines()
+                    song_count = len(mp3_paths)
+                    total_songs += song_count
+                    playlist_songs[playlist_file] = mp3_paths
+                    logger.info(f"Playlist {playlist_file}: {song_count} songs")
+            except Exception as e:
+                logger.error(f"Error counting songs in playlist file {playlist_file}: {e}")
+        
+        download_progress["total_songs"] = total_songs
+        download_progress["status"] = "downloading"
+        logger.info(f"Total songs to process: {total_songs}")
+        
+        # Create a new ZIP file in memory
+        new_zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(new_zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            processed_songs = 0
+            
+            # Process each playlist file
+            for playlist_file, mp3_paths in playlist_songs.items():
+                emoji_name = os.path.splitext(playlist_file)[0]  # Get emoji name without extension
+                download_progress["current_playlist"] = emoji_name
+                logger.info(f"Processing playlist: {emoji_name}")
+                
+                # Process each song in the playlist
+                for mp3_path in mp3_paths:
+                    # Extract filename from path
+                    filename = os.path.basename(mp3_path)
+                    
+                    # Get song details from database
+                    cursor.execute("""
+                        SELECT id, title FROM downloads WHERE filename = ?
+                    """, (filename,))
+                    song_data = cursor.fetchone()
+                    
+                    if song_data:
+                        song_id, title = song_data
+                        file_path = os.path.join("/usr/src/app/downloads", filename)
+                        
+                        if os.path.exists(file_path):
+                            # Add the file to the ZIP in a folder named after the playlist
+                            zipf.write(file_path, arcname=f"{emoji_name}/{filename}")
+                            logger.debug(f"Added file to ZIP: {emoji_name}/{filename}")
+                        else:
+                            logger.warning(f"File not found for song {title}: {file_path}")
+                    
+                    # Update progress after each file and log every 10 files
+                    processed_songs += 1
+                    download_progress["processed_songs"] = processed_songs
+                    if processed_songs % 10 == 0 or processed_songs == total_songs:
+                        logger.info(f"Progress: {processed_songs}/{total_songs} songs processed ({int(processed_songs/total_songs*100)}%)")
+                    
+                    # Small sleep to ensure other threads can run
+                    time.sleep(0.01)
+        
+        conn.close()
+        new_zip_buffer.seek(0)
+        
+        # Update global ZIP buffer
+        zip_buffer = new_zip_buffer
+        
+        # Update progress
+        download_progress["status"] = "complete"
+        logger.info("ZIP creation completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Error in background ZIP creation: {e}", exc_info=True)
+        download_progress["status"] = "error"
+        download_progress["error"] = str(e)
+    finally:
+        zip_creation_in_progress = False
+
 
 @app.route("/download_archive")
 def download_all_playlists():
+    global download_progress, zip_creation_in_progress, zip_buffer
+    
+    # Check if this is an AJAX request from the progress page
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
     try:
-        # Get all unique emoji names
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT emoji_name FROM downloads")
-        emoji_names = [row[0] for row in cursor.fetchall()]
+        # If AJAX request and ZIP creation already in progress, just return status
+        if is_ajax and zip_creation_in_progress:
+            return jsonify({"status": download_progress["status"]})
         
-        if not emoji_names:
-            return "No playlists found", 404
+        # If AJAX request and ZIP is complete, return complete status
+        if is_ajax and download_progress["status"] == "complete" and zip_buffer is not None:
+            return jsonify({"status": "complete"})
         
-        # Create a ZIP file in memory
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # For each emoji/playlist
-            for emoji_name in emoji_names:
-                # Get all songs for this playlist (limited to avoid huge archives)
-                cursor.execute("""
-                    SELECT id, title, filename 
-                    FROM downloads 
-                    WHERE emoji_name = ? 
-                    ORDER BY timestamp DESC 
-                    LIMIT 100
-                """, (emoji_name,))
-                songs = cursor.fetchall()
-                
-                # Create a folder for each playlist
-                for song_id, title, filename in songs:
-                    file_path = os.path.join("/usr/src/app/downloads", filename)
-                    if os.path.exists(file_path):
-                        # Add the file to the ZIP in a folder named after the playlist
-                        zipf.write(file_path, arcname=f"{emoji_name}/{filename}")
-                    else:
-                        logger.warning(f"File not found for song {title}: {file_path}")
+        # If not AJAX request and ZIP is complete, send the file
+        if not is_ajax and download_progress["status"] == "complete" and zip_buffer is not None:
+            # Generate timestamp for the filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Return the ZIP file with a timestamped name
+            return send_file(
+                zip_buffer,
+                mimetype='application/zip',
+                as_attachment=True,
+                download_name=f"corecore_{timestamp}.zip"
+            )
         
-        conn.close()
-        zip_buffer.seek(0)
+        # Reset progress for a new ZIP creation process
+        if not zip_creation_in_progress:
+            download_progress = {
+                "status": "preparing",
+                "total_songs": 0,
+                "processed_songs": 0,
+                "current_playlist": "Initializing...",
+                "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                "error": None
+            }
+            
+            # Start background thread for ZIP creation
+            zip_creation_in_progress = True
+            thread = threading.Thread(target=create_archive_in_background)
+            thread.daemon = True
+            thread.start()
+            
+            logger.info("Started background thread for ZIP creation")
         
-        # Generate timestamp for the filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # If AJAX request, return current progress
+        if is_ajax:
+            return jsonify({"status": download_progress["status"]})
         
-        # Return the ZIP file with a timestamped name
-        return send_file(
-            zip_buffer, 
-            mimetype='application/zip',
-            as_attachment=True, 
-            download_name=f"bubble_radio_archive_{timestamp}.zip"
-        )
+        # If direct request but ZIP not ready, redirect to feed_the_chao
+        return redirect(url_for('feed_the_chao'))
+            
     except Exception as e:
-        logger.error(f"Error creating complete archive ZIP: {e}")
+        logger.error(f"Error handling download request: {e}", exc_info=True)
+        download_progress["status"] = "error"
+        download_progress["error"] = str(e)
+        if is_ajax:
+            return jsonify({"status": "error", "message": str(e)})
         return "Error creating archive", 500
+
+@app.route("/download_progress")
+def check_download_progress():
+    """Return the current download progress as JSON"""
+    global download_progress
+    
+    # Calculate percentage
+    if download_progress["total_songs"] > 0:
+        percentage = int((download_progress["processed_songs"] / download_progress["total_songs"]) * 100)
+    else:
+        percentage = 0
+    
+    # Add percentage to the response
+    response = download_progress.copy()
+    response["percentage"] = percentage
+    
+    return jsonify(response)
 
 @app.route("/static/<path:filename>")
 def serve_static(filename):

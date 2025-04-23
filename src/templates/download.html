@@ -7,7 +7,7 @@
         body {
             background-color: #4E9986;
             color: white;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: Arial, monospace;
             text-align: center;
             padding: 50px;
         }
@@ -25,6 +25,39 @@
             margin-top: 30px;
             font-size: 18px;
         }
+        
+        /* Progress bar styles */
+        .progress-container {
+            margin: 30px auto;
+            background-color: #3C7A6B;
+            border-radius: 20px;
+            padding: 3px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #81C7E8;
+            border-radius: 20px;
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        .progress-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: #333;
+            font-weight: bold;
+            text-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+        .detail-text {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #E3E3E3;
+        }
     </style>
 </head>
 <body>
@@ -35,16 +68,148 @@
             <img src="/src/img/happy_chao.gif" alt="Chao" />
         </div>
         
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+        </div>
+        
+        <div class="detail-text" id="detailText">Preparing download...</div>
+        
         <div class="status">
-            <p>Your download will begin automatically in a few seconds.</p>
+            <p id="statusText">Creating your playlist archive. Please wait...</p>
+        </div>
+        
+        <!-- Download button (hidden until ready) -->
+        <div id="downloadButtonContainer" style="display: none; margin-top: 20px;">
+            <button id="downloadButton" style="background-color: #81C7E8; color: #333; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; font-family: 'IBM Plex Mono', monospace;">
+                DOWNLOAD NOW
+            </button>
         </div>
     </div>
 
     <script>
-        // Initiate download after a short delay
-        setTimeout(function() {
-            window.location.href = "/download_archive";
-        }, 3000); // 3 seconds delay
+        // Track if download started
+        let downloadStarted = false;
+        let lastProgress = 0;
+        let consecutiveNoChangeCount = 0;
+        
+        // Add debug info to page
+        function addDebugInfo(message) {
+            console.log(message);
+            const detailText = document.getElementById('detailText');
+            detailText.innerHTML += "<br>" + message;
+        }
+        
+        // Start download function
+        function startDownload() {
+            if (!downloadStarted) {
+                downloadStarted = true;
+                document.getElementById('statusText').textContent = 'Starting download...';
+                document.getElementById('downloadButtonContainer').style.display = 'none';
+                console.log("Starting download");
+                window.location.href = "/download_archive";
+            }
+        }
+        
+        // Check progress periodically
+        function checkProgress() {
+            // Add timestamp to avoid caching
+            const timestamp = new Date().getTime();
+            fetch(`/download_progress?t=${timestamp}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Progress update:", data);
+                    
+                    // Update progress bar
+                    const progressBar = document.getElementById('progressBar');
+                    const progressText = document.getElementById('progressText');
+                    const detailText = document.getElementById('detailText');
+                    const statusText = document.getElementById('statusText');
+                    const downloadButtonContainer = document.getElementById('downloadButtonContainer');
+                    
+                    if (data.status === 'preparing') {
+                        progressBar.style.width = '5%';
+                        progressText.textContent = 'Preparing...';
+                        detailText.textContent = 'Looking for playlists...';
+                    } else if (data.status === 'downloading') {
+                        const percentage = data.percentage || 0;
+                        progressBar.style.width = percentage + '%';
+                        progressText.textContent = percentage + '%';
+                        
+                        // Check if progress is stuck
+                        if (percentage === lastProgress) {
+                            consecutiveNoChangeCount++;
+                            if (consecutiveNoChangeCount % 10 === 0) {
+                                console.log(`Progress stuck at ${percentage}% for ${consecutiveNoChangeCount} checks`);
+                            }
+                        } else {
+                            consecutiveNoChangeCount = 0;
+                            lastProgress = percentage;
+                        }
+                        
+                        detailText.textContent = `Processing (${data.processed_songs}/${data.total_songs})`;
+                    } else if (data.status === 'complete') {
+                        progressBar.style.width = '100%';
+                        progressText.textContent = 'Complete!';
+                        detailText.textContent = `All ${data.total_songs} songs processed.`;
+                        statusText.textContent = 'Your download is ready!';
+                        
+                        // Show the download button
+                        downloadButtonContainer.style.display = 'block';
+                        
+                        // Add click event to the download button
+                        document.getElementById('downloadButton').addEventListener('click', startDownload);
+                        
+                        // No automatic download - wait for user to click the button
+                    } else if (data.status === 'error') {
+                        progressBar.style.width = '100%';
+                        progressBar.style.backgroundColor = '#e67c7c';
+                        progressText.textContent = 'Error';
+                        detailText.textContent = data.error || 'An unknown error occurred';
+                        statusText.textContent = 'Failed to create download. Please try again later.';
+                    }
+                    
+                    // Continue checking if not complete yet
+                    if (data.status !== 'complete' && data.status !== 'error') {
+                        // Poll very frequently (100ms) for more responsive updates
+                        setTimeout(checkProgress, 100);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking progress:', error);
+                    document.getElementById('detailText').textContent = 'Error checking progress: ' + error;
+                    
+                    // Retry after a short delay
+                    setTimeout(checkProgress, 500);
+                });
+        }
+
+        // Start progress checks
+        console.log("Starting progress checks");
+        checkProgress();
+        
+        // Start the download creation process immediately
+        console.log("Initiating archive creation");
+        fetch('/download_archive', { 
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(response => {
+            console.log("Archive creation initiated:", response.status);
+            return response.json();
+        }).then(data => {
+            console.log("Archive creation response:", data);
+        }).catch(error => {
+            console.error('Error starting download process:', error);
+            document.getElementById('detailText').textContent = 'Error starting download process: ' + error;
+        });
     </script>
 </body>
 </html> 
