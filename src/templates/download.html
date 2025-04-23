@@ -58,6 +58,25 @@
             font-size: 14px;
             color: #E3E3E3;
         }
+        
+        /* Download button styles */
+        #downloadButtonContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        #downloadButton {
+            background-color: #81C7E8;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+        }
+        #downloadButton:hover {
+            background-color: #60b6df;
+        }
     </style>
 </head>
 <body>
@@ -81,7 +100,7 @@
         </div>
         
         <!-- Download button (hidden until ready) -->
-        <div id="downloadButtonContainer" style="display: none; margin-top: 20px;">
+        <div id="downloadButtonContainer">
             <button id="downloadButton">
                 DOWNLOAD NOW
             </button>
