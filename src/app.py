@@ -419,16 +419,19 @@ def feed_the_chao():
     Show the download page with progress bar.
     The actual download will be initiated by client-side JavaScript.
     """
-    # Reset progress state
-    global download_progress
-    download_progress = {
-        "status": "idle",
-        "total_songs": 0,
-        "processed_songs": 0,
-        "current_playlist": "",
-        "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
-        "error": None
-    }
+    # Only reset progress state if there's no download in progress
+    global download_progress, zip_creation_in_progress
+    
+    # Don't reset anything if a download is already in progress
+    if not zip_creation_in_progress:
+        download_progress = {
+            "status": "idle",
+            "total_songs": 0,
+            "processed_songs": 0,
+            "current_playlist": "",
+            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+            "error": None
+        }
     
     return render_template("download.html")
 
@@ -550,9 +553,12 @@ def download_all_playlists():
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
     try:
-        # If AJAX request and ZIP creation already in progress, just return status
+        # If AJAX request and ZIP creation already in progress, return status indicating it's already running
         if is_ajax and zip_creation_in_progress:
-            return jsonify({"status": download_progress["status"]})
+            return jsonify({
+                "status": "in_progress",
+                "message": "Someone is already downloading ~ Please try again in a few minutes"
+            })
         
         # If AJAX request and ZIP is complete, return complete status
         if is_ajax and download_progress["status"] == "complete" and zip_buffer is not None:
@@ -589,10 +595,10 @@ def download_all_playlists():
             thread.start()
             
             logger.info("Started background thread for ZIP creation")
-        
-        # If AJAX request, return current progress
-        if is_ajax:
-            return jsonify({"status": download_progress["status"]})
+            
+            # If AJAX request, return started status
+            if is_ajax:
+                return jsonify({"status": "started"})
         
         # If direct request but ZIP not ready, redirect to feed_the_chao
         return redirect(url_for('feed_the_chao'))

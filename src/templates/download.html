@@ -16,28 +16,35 @@
                 <img src="/static/img/happy_chao.gif" alt="Chao" />
             </div>
             
-            <div class="progress-container">
-                <div class="progress-bar" id="progressBar">
-                    <div class="progress-label" id="progressText">0%</div>
+            <!-- "Already in progress" message - initially hidden -->
+            <div id="inProgressMessage" class="in-progress-message" style="display: none;">
+                <p>Someone is already downloading ~ please try again in a few minutes</p>
+            </div>
+            
+            <!-- Main download UI - initially shown -->
+            <div id="downloadUI">
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-label" id="progressText">0%</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="status-info">
-                <div class="status-details" id="detailText">Preparing download...</div>
-                <div class="status-message" id="statusText">Creating your playlist archive. Please wait...</div>
-            </div>
-            
-            <!-- Download button (hidden until ready) -->
-            <div id="downloadButtonContainer" style="display: none;">
-                <button id="downloadButton" class="action-btn download-btn">
-                    DOWNLOAD NOW
-                </button>
+                
+                <div class="status-info">
+                    <div class="status-details" id="detailText">Preparing download...</div>
+                    <div class="status-message" id="statusText">Creating your playlist archive. Please wait...</div>
+                </div>
+                
+                <!-- Download button (hidden until ready) -->
+                <div id="downloadButtonContainer" style="display: none;">
+                    <button id="downloadButton" class="action-btn download-btn">
+                        DOWNLOAD NOW
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        
         // Track if download started
         let downloadStarted = false;
         let lastProgress = 0;
@@ -139,25 +146,50 @@
                 });
         }
 
-        // Start progress checks
-        console.log("Starting progress checks");
-        checkProgress();
-        
-        // Start the download creation process immediately
-        console.log("Initiating archive creation");
+        // First, check if a download is already in progress
+        console.log("Checking if a download is already in progress");
         fetch('/download_archive', { 
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
-        }).then(response => {
-            console.log("Archive creation initiated:", response.status);
-            return response.json();
-        }).then(data => {
-            console.log("Archive creation response:", data);
-        }).catch(error => {
-            console.error('Error starting download process:', error);
-            document.getElementById('detailText').textContent = 'Error starting download process: ' + error;
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Initial status check:", data);
+            
+            // If a download is already in progress, show the message
+            if (data.status === 'in_progress') {
+                document.getElementById('downloadUI').style.display = 'none';
+                document.getElementById('inProgressMessage').style.display = 'block';
+            } 
+            // Otherwise, start a new download and begin progress monitoring
+            else if (data.status === 'started' || data.status === 'preparing') {
+                // Start monitoring the download progress
+                checkProgress();
+            }
+            // If the data is already complete, show the download button
+            else if (data.status === 'complete') {
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                const detailText = document.getElementById('detailText');
+                const statusText = document.getElementById('statusText');
+                
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Complete!';
+                detailText.textContent = 'Archive ready for download';
+                statusText.textContent = 'Your download is ready!';
+                
+                // Show the download button
+                document.getElementById('downloadButtonContainer').style.display = 'block';
+                
+                // Add click event to the download button
+                document.getElementById('downloadButton').addEventListener('click', startDownload);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking download status:', error);
+            document.getElementById('detailText').textContent = 'Error checking download status: ' + error;
         });
     </script>
 </body>
