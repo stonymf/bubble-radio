@@ -42,7 +42,9 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "bubbleradio")
 db_path = "/usr/src/app/db.db"
 playlist_directory = "/usr/src/app/playlists"
 
-app = Flask(__name__)
+app = Flask(__name__, 
+            static_folder=os.path.join(os.path.dirname(__file__), "static"),
+            static_url_path="/static")
 
 # Basic authentication function
 def requires_auth(f):
@@ -622,11 +624,7 @@ def check_download_progress():
 
 @app.route("/static/<path:filename>")
 def serve_static(filename):
-    return send_from_directory("static", filename)
-
-@app.route("/src/img/<path:filename>")
-def serve_image(filename):
-    return send_from_directory(os.path.join(os.path.dirname(__file__), "img"), filename)
+    return send_from_directory(os.path.join(os.path.dirname(__file__), "static"), filename)
 
 @app.route("/download_db")
 @requires_auth

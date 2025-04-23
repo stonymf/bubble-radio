@@ -3,111 +3,41 @@
 <head>
     <title>Bubble Radio Archive Download</title>
     <meta charset="UTF-8">
-    <style>
-        body {
-            background-color: #4E9986;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        h1 {
-            margin-bottom: 30px;
-        }
-        .chao-container {
-            margin: 30px auto;
-        }
-        .status {
-            margin-top: 30px;
-            font-size: 18px;
-        }
-        
-        /* Progress bar styles */
-        .progress-container {
-            margin: 30px auto;
-            background-color: #3C7A6B;
-            border-radius: 20px;
-            padding: 3px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .progress-bar {
-            height: 20px;
-            background-color: #81C7E8;
-            border-radius: 20px;
-            width: 0%;
-            transition: width 0.5s ease;
-            position: relative;
-        }
-        .progress-text {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            color: #333;
-            font-weight: bold;
-            text-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
-        }
-        .detail-text {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #E3E3E3;
-        }
-        
-        /* Download button styles */
-        #downloadButtonContainer {
-            display: none;
-            margin-top: 20px;
-        }
-        #downloadButton {
-            background-color: #81C7E8;
-            color: #333;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: Arial, sans-serif;
-        }
-        #downloadButton:hover {
-            background-color: #60b6df;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/download.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Preparing your download ~ n.n</h1>
+    <div class="terminal">
         
-        <div class="chao-container">
-            <img src="/src/img/happy_chao.gif" alt="Chao" />
-        </div>
-        
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-text" id="progressText">0%</div>
+        <div class="stream-container">
+            <h1>Preparing your download ~ n.n</h1>
+            
+            <div class="chao-container">
+                <img src="/static/img/happy_chao.gif" alt="Chao" />
             </div>
-        </div>
-        
-        <div class="detail-text" id="detailText">Preparing download...</div>
-        
-        <div class="status">
-            <p id="statusText">Creating your playlist archive. Please wait...</p>
-        </div>
-        
-        <!-- Download button (hidden until ready) -->
-        <div id="downloadButtonContainer">
-            <button id="downloadButton">
-                DOWNLOAD NOW
-            </button>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-label" id="progressText">0%</div>
+                </div>
+            </div>
+            
+            <div class="status-info">
+                <div class="status-details" id="detailText">Preparing download...</div>
+                <div class="status-message" id="statusText">Creating your playlist archive. Please wait...</div>
+            </div>
+            
+            <!-- Download button (hidden until ready) -->
+            <div id="downloadButtonContainer" style="display: none;">
+                <button id="downloadButton" class="action-btn download-btn">
+                    DOWNLOAD NOW
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
+        
         // Track if download started
         let downloadStarted = false;
         let lastProgress = 0;

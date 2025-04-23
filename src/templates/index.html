@@ -1,16 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>#music</title>
+    <title>Bubble Radio Streams</title>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
-    <h1>#music</h1>
-    <ul>
-        {% for stream in streams|sort %}
-            <li><a href="/demo/{{ stream }}">{{ stream.replace('_', ' ') }}</a></li>
-        {% endfor %}
-    </ul>
+    <div class="terminal">
+        <div class="terminal-bar">
+            <span>BUBBLE RADIO STREAMS</span>
+            <span id="datetime">...</span>
+        </div>
+        
+        <h1>Available Streams</h1>
+        
+        <ul class="stream-list">
+            {% for stream in streams|sort %}
+                <li><a href="/demo/{{ stream }}">{{ stream.replace('_', ' ') }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <script>
+        // Display date and time
+        function updateDateTime() {
+            var now = new Date();
+            var dateStr = now.toISOString().replace('T', ' ').substring(0, 19);
+            document.getElementById('datetime').textContent = dateStr;
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    </script>
 </body>
 </html>
 

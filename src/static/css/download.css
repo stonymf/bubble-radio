@@ -1,0 +1,137 @@
+/* Download page specific styles */
+
+/* Override some main.css styles for this specific page */
+.terminal {
+    box-shadow: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Override body styles from main.css to match original */
+body {
+    text-align: center;
+    padding: 25px;
+}
+
+.stream-container {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 0;
+}
+
+h1 {
+    margin-bottom: 30px;
+    border-bottom: none;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.chao-container {
+    margin: 30px auto;
+    text-align: center;
+}
+
+/* Progress bar styles */
+.progress-container {
+    margin: 10px auto;
+    background-color: #3C7A6B;
+    border-radius: 20px;
+    padding: 3px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border: none;
+}
+
+.progress-bar {
+    height: 20px;
+    background-color: #81C7E8;
+    border-radius: 20px;
+    width: 0%;
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.progress-label {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #333;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+}
+
+.status-info {
+    margin: 10px 0;
+    padding: 5px;
+    text-align: center;
+    border: none;
+}
+
+.status-message {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+.status-details {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #E3E3E3;
+}
+
+/* Download button container */
+#downloadButtonContainer {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Action buttons (from main.css) customization */
+.action-btn.download-btn {
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+}
+
+.header-actions {
+    margin-top: 30px;
+    text-align: center;
+    display: block; /* Override flex from main.css */
+    justify-content: center;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+.download-ready {
+    background-color: #81C7E8;
+    color: #333;
+    padding: 10px;
+    margin: 20px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+.error-message {
+    background-color: #5D413F;
+    color: #ffcccc;
+    padding: 10px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+/* Terminal bar adjustment */
+.terminal-bar {
+    margin: 0 0 20px 0;
+    border-radius: 5px 5px 0 0;
+} 

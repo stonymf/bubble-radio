@@ -3,26 +3,47 @@
 <head>
     <title>{{ stream_name }}</title>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
-    <h1>{{ stream_name }}</h1>
-    <p style="color: #bbb">now playing</p>
-    <p><span id="currentSong">{{ title|safe }}</span></p>
-    <p><a target="_blank" id="sourceLink" href="{{ url }}">source</a></p>
+    <div class="terminal">
+        <div class="terminal-bar">
+            <span>BUBBLE RADIO: {{ stream_name|upper }}</span>
+            <span id="datetime">...</span>
+        </div>
+        
+        <div class="stream-container">
+            <h1 class="stream-title">{{ stream_name }}</h1>
+            
+            <p class="now-playing">now playing</p>
+            <p><span id="currentSong">{{ title|safe }}</span></p>
+            <p><a target="_blank" id="sourceLink" href="{{ url }}" class="source-link">source</a></p>
 
-    <!-- Hidden HTML5 Audio Player -->
-    <audio id="audio-player" preload="auto" src="{{ base_stream_url }}/{{ stream_name }}" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
+            <!-- Hidden HTML5 Audio Player -->
+            <audio id="audio-player" preload="auto" src="{{ base_stream_url }}/{{ stream_name }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
 
-    <!-- Play/Pause Button -->
-    <button id="playButton" onclick="playStream()">Play</button>
-    <button id="pauseButton" onclick="pauseStream()" style="display:none;">Pause</button>
-
-    <!-- Mute/Unmute Button -->
-    <button id="muteButton" onclick="toggleMute()">Mute</button>
+            <!-- Stream Controls -->
+            <div class="stream-controls">
+                <button id="playButton" class="action-btn" onclick="playStream()">PLAY</button>
+                <button id="pauseButton" class="action-btn" onclick="pauseStream()" style="display:none;">PAUSE</button>
+                <button id="muteButton" class="action-btn" onclick="toggleMute()">MUTE</button>
+                <a href="/demo" class="action-btn back-link">BACK TO STREAMS</a>
+            </div>
+        </div>
+    </div>
 
     <script>
+        // Display date and time
+        function updateDateTime() {
+            var now = new Date();
+            var dateStr = now.toISOString().replace('T', ' ').substring(0, 19);
+            document.getElementById('datetime').textContent = dateStr;
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
         var audioPlayer = document.getElementById('audio-player');
         var playButton = document.getElementById('playButton');
         var pauseButton = document.getElementById('pauseButton');
@@ -57,7 +78,7 @@
             console.log('Mute toggle');
             if (audioPlayer) {
                 audioPlayer.muted = !audioPlayer.muted;
-                muteButton.textContent = audioPlayer.muted ? 'Unmute' : 'Mute';
+                muteButton.textContent = audioPlayer.muted ? 'UNMUTE' : 'MUTE';
             }
         }
 
@@ -113,27 +134,3 @@
     </script>
 </body>
 </html>
-
-<style>
-    body {
-        text-align: center;
-        font-family: Arial, sans-serif;
-    }
-    
-    h1 {
-        color: #333;
-    }
-    
-    ul {
-        list-style-type: none;
-        padding: 0;
-    }
-    
-    ul li {
-        margin: 10px 0;
-    }
-    
-    audio, button {
-        margin: 10px 0;
-    }
-    </style>
