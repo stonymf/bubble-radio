@@ -346,6 +346,24 @@
         .col-operations {
             width: 145px; /* Fixed width for action buttons */
         }
+        
+        /* Additional layout styles */
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .station-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .warning-text {
+            color: #ffcccc;
+        }
     </style>
 </head>
 <body>
@@ -355,7 +373,7 @@
             <span id="datetime">...</span>
         </div>
         
-        <p style="display: flex; justify-content: space-between; align-items: center;">
+        <p class="header-actions">
             <a href="/demo" class="back-link">RETURN TO STREAM LIST</a>
             <a href="/download_db" class="action-btn download-btn">DOWNLOAD DB BACKUP</a>
         </p>
@@ -374,7 +392,7 @@
         {% for station_name, station_data in stations.items() %}
         <div id="{{ station_name }}" class="main-tab-content {% if loop.first %}active{% endif %}">
             <!-- Station header with download button -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div class="station-header">
                 <h2>{{ station_name }}</h2>
                 <a href="/download_playlist/{{ station_name }}" class="action-btn download-btn">DOWNLOAD PLAYLIST</a>
             </div>
@@ -499,7 +517,7 @@
             </div>
             <h2>CONFIRM DELETION</h2>
             <p>DELETE RECORD: <strong id="deleteTitle"></strong>?</p>
-            <p style="color: #ffcccc;">THIS OPERATION CANNOT BE REVERSED</p>
+            <p class="warning-text">THIS OPERATION CANNOT BE REVERSED</p>
             <div class="form-actions">
                 <button type="button" class="cancel-btn" onclick="closeDeleteModal()">CANCEL</button>
                 <button type="button" class="delete-btn" onclick="deleteSong()">DELETE</button>
