@@ -43,6 +43,15 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_secure_password
 
 
+## Idents Configuration (optional)
+
+# enable ident interpolation in playlists
+ENABLE_IDENTS=true
+
+# insert ident every X songs
+IDENT_INTERVAL=8
+
+
 ## Network config
 
 # you probably should not change this
@@ -116,6 +125,43 @@ location /get_original_url {
     proxy_set_header X-Forwarded-Proto $scheme;
 }
 ```
+
+### Idents Feature
+
+Bubble Radio supports automatic interpolation of "ident" audio clips into playlists. Idents are short introductory audio snippets that can introduce different streaming channels or provide station identification.
+
+#### Setup
+
+1. **Add ident files to the repo:** Place your MP3 ident files in the `idents/` directory using the exact stream name:
+   ```
+   idents/
+   ├── 1radio.mp3          # Ident for /1radio stream
+   ├── 2radio.mp3          # Ident for /2radio stream  
+   ├── 3radio.mp3          # Ident for /3radio stream
+   └── [emoji_name].mp3    # Works for any stream name
+   ```
+
+2. **Configure in .env:**
+   ```bash
+   ENABLE_IDENTS=true
+   IDENT_INTERVAL=8                  # Play ident every 8 songs
+   ```
+
+#### How it works
+
+- When `ENABLE_IDENTS=true`, the system looks for `{stream_name}.mp3` in the `idents/` directory
+- If found, it interpolates the ident into the playlist every X songs (set by `IDENT_INTERVAL`)
+- If no ident file exists for a stream, that stream plays without idents
+- Idents are included in the streaming playlists but **not** in admin panel downloads
+- Each stream operates independently - you can have idents on some streams but not others
+- Idents are built into the Docker container, so no external mounting is required
+
+#### File Requirements
+
+- Ident files must be in MP3 format
+- Files should be relatively short (typically 5-30 seconds)
+- Ensure proper audio levels to match your music content
+- File name must exactly match the stream/emoji name
 
 ### Utility Scripts
 
