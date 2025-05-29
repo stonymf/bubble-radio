@@ -49,7 +49,7 @@ ADMIN_PASSWORD=your_secure_password
 ENABLE_IDENTS=true
 
 # insert ident every X songs
-IDENT_INTERVAL=8
+IDENT_INTERVAL=10
 
 
 ## Network config
