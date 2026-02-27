@@ -18,7 +18,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
 intents.guilds = True
-intents.members = True
 
 bot = discord.Client(intents=intents)
 
