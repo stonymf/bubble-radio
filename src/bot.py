@@ -102,7 +102,6 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         return
 
     url = urls[0]
-    submitted.add(key)
 
     # POST to the Flask server
     data = {
@@ -125,6 +124,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         result = resp.json()
 
         if resp.status_code == 200:
+            submitted.add(key)
             logger.info(f"Song submitted: {url} -> {playlist_name}")
             await message.reply(f"Added to **{playlist_name}**", mention_author=False)
         else:
