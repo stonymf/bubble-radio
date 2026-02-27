@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from src.downloader import download_audio
 from src.config import SECRET_KEY
+from src.db import get_db
 
 bp = Blueprint('api', __name__)
 
@@ -25,3 +26,30 @@ def add_song():
         return jsonify({"status": "error", "message": result}), 500
     else:
         return jsonify({"status": "success", "message": "Song added successfully."}), 200
+
+
+@bp.route("/settings/<key>", methods=['GET'])
+def get_setting(key):
+    if request.headers.get("Authorization") != SECRET_KEY:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    with get_db() as conn:
+        row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    if row:
+        return jsonify({"value": row[0]}), 200
+    return jsonify({"value": None}), 404
+
+
+@bp.route("/settings/<key>", methods=['PUT'])
+def set_setting(key):
+    if request.headers.get("Authorization") != SECRET_KEY:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    value = request.json.get("value")
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?",
+            (key, value, value),
+        )
+        conn.commit()
+    return jsonify({"status": "ok"}), 200

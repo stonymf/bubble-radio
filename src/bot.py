@@ -16,7 +16,8 @@ EMOJI_MAP = {
     "3radio":       ("3radio", "1217466244350083072"),
 }
 URL_PATTERN = re.compile(r'https?://\S+')
-ADD_SONG_URL = "http://bubble-radio-app:5000/add_song"
+APP_BASE_URL = "http://bubble-radio-app:5000"
+ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
 
 # Track submitted (message_id, emoji_name) to avoid duplicate POSTs
 submitted = set()
@@ -32,8 +33,39 @@ intents.guilds = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
+def _get_setting(key):
+    try:
+        resp = requests.get(
+            f"{APP_BASE_URL}/settings/{key}",
+            headers={"Authorization": SECRET_KEY},
+            timeout=5,
+        )
+        if resp.status_code == 200:
+            return resp.json().get("value")
+    except requests.RequestException:
+        pass
+    return None
+
+
+def _set_setting(key, value):
+    try:
+        requests.put(
+            f"{APP_BASE_URL}/settings/{key}",
+            json={"value": str(value)},
+            headers={"Authorization": SECRET_KEY},
+            timeout=5,
+        )
+    except requests.RequestException as e:
+        logger.error(f"Failed to persist setting {key}: {e}")
+
+
 @bot.event
 async def on_ready():
+    global react_threshold
+    saved = _get_setting("react_threshold")
+    if saved is not None:
+        react_threshold = int(saved)
+        logger.info(f"Loaded react_threshold={react_threshold} from DB")
     logger.info(f"Bot connected as {bot.user}")
 
 
@@ -45,6 +77,7 @@ async def set_threshold(ctx, value: int):
         await ctx.reply("Threshold must be at least 1")
         return
     react_threshold = value
+    _set_setting("react_threshold", value)
     logger.info(f"Threshold changed to {value} by {ctx.author}")
     await ctx.reply(f"React threshold set to **{value}**")
 
