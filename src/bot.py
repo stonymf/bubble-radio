@@ -2,6 +2,7 @@ import re
 import logging
 import requests
 import discord
+from discord.ext import commands
 from src.config import SECRET_KEY, DISCORD_BOT_TOKEN, DISCORD_REACT_THRESHOLD
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -14,17 +15,40 @@ ADD_SONG_URL = "http://bubble-radio-app:5000/add_song"
 # Track submitted (message_id, emoji_name) to avoid duplicate POSTs
 submitted = set()
 
+# Mutable threshold — starts from config, changeable via !threshold
+react_threshold = DISCORD_REACT_THRESHOLD
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
 intents.guilds = True
 
-bot = discord.Client(intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 @bot.event
 async def on_ready():
     logger.info(f"Bot connected as {bot.user}")
+
+
+@bot.command(name="threshold")
+@commands.has_permissions(manage_guild=True)
+async def set_threshold(ctx, value: int):
+    global react_threshold
+    if value < 1:
+        await ctx.reply("Threshold must be at least 1")
+        return
+    react_threshold = value
+    logger.info(f"Threshold changed to {value} by {ctx.author}")
+    await ctx.reply(f"React threshold set to **{value}**")
+
+
+@set_threshold.error
+async def threshold_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.reply("You need Manage Server permission to change the threshold")
+    elif isinstance(error, (commands.MissingRequiredArgument, commands.BadArgument)):
+        await ctx.reply(f"Usage: `!threshold <number>` (currently **{react_threshold}**)")
 
 
 @bot.event
@@ -52,10 +76,10 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     # Find the matching reaction and check count
     for reaction in message.reactions:
         if isinstance(reaction.emoji, discord.PartialEmoji) or isinstance(reaction.emoji, discord.Emoji):
-            if reaction.emoji.name == emoji_name and reaction.count >= DISCORD_REACT_THRESHOLD:
+            if reaction.emoji.name == emoji_name and reaction.count >= react_threshold:
                 break
         elif isinstance(reaction.emoji, str) and reaction.emoji == emoji_name:
-            if reaction.count >= DISCORD_REACT_THRESHOLD:
+            if reaction.count >= react_threshold:
                 break
     else:
         return
