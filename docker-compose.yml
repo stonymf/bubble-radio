@@ -47,6 +47,17 @@ services:
       - bubble-radio-icecast
     command: /bin/bash -c "./src/start_streams.sh"
 
+  bubble-radio-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    env_file:
+      - .env
+    command: python -m src.bot
+    depends_on:
+      - bubble-radio-app
+    restart: unless-stopped
+
   nginx:
     image: nginx:latest
     ports:

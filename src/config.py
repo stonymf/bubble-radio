@@ -26,6 +26,10 @@ RECENT_SONG_COUNT = int(os.getenv("RECENT_SONG_COUNT", "100"))
 ENABLE_IDENTS = os.getenv("ENABLE_IDENTS", "false").lower() == "true"
 IDENT_INTERVAL = int(os.getenv("IDENT_INTERVAL", "8"))
 
+# Discord bot
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
+DISCORD_REACT_THRESHOLD = int(os.getenv("DISCORD_REACT_THRESHOLD", "3"))
+
 
 def get_disallowed_domains():
     try:
