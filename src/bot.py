@@ -8,7 +8,13 @@ from src.config import SECRET_KEY, DISCORD_BOT_TOKEN, DISCORD_REACT_THRESHOLD
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('bot')
 
-RADIO_EMOJIS = {"1radio", "2radio", "3radio"}
+# Maps reaction emoji name → (playlist emoji_name, playlist emoji_id)
+EMOJI_MAP = {
+    "\u2764\ufe0f": ("1radio", "1217470040685936793"),
+    "\u2764":       ("1radio", "1217470040685936793"),  # heart without variation selector
+    "2radio":       ("2radio", "1217470007378706503"),
+    "3radio":       ("3radio", "1217466244350083072"),
+}
 URL_PATTERN = re.compile(r'https?://\S+')
 ADD_SONG_URL = "http://bubble-radio-app:5000/add_song"
 
@@ -53,11 +59,12 @@ async def threshold_error(ctx, error):
 
 @bot.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
-    emoji_name = payload.emoji.name
-    if emoji_name not in RADIO_EMOJIS:
+    react_name = payload.emoji.name
+    if react_name not in EMOJI_MAP:
         return
 
-    key = (payload.message_id, emoji_name)
+    playlist_name, playlist_emoji_id = EMOJI_MAP[react_name]
+    key = (payload.message_id, playlist_name)
     if key in submitted:
         return
 
@@ -75,12 +82,12 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
 
     # Find the matching reaction and check count
     for reaction in message.reactions:
-        if isinstance(reaction.emoji, discord.PartialEmoji) or isinstance(reaction.emoji, discord.Emoji):
-            if reaction.emoji.name == emoji_name and reaction.count >= react_threshold:
-                break
-        elif isinstance(reaction.emoji, str) and reaction.emoji == emoji_name:
-            if reaction.count >= react_threshold:
-                break
+        if isinstance(reaction.emoji, str):
+            match = reaction.emoji in EMOJI_MAP
+        else:
+            match = reaction.emoji.name == react_name
+        if match and reaction.count >= react_threshold:
+            break
     else:
         return
 
@@ -99,8 +106,8 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         "timestamp": message.created_at.isoformat(),
         "channel_id": payload.channel_id,
         "server_id": payload.guild_id,
-        "emoji_name": emoji_name,
-        "emoji_id": str(payload.emoji.id) if payload.emoji.id else emoji_name,
+        "emoji_name": playlist_name,
+        "emoji_id": playlist_emoji_id,
     }
 
     try:
@@ -113,8 +120,8 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         result = resp.json()
 
         if resp.status_code == 200:
-            logger.info(f"Song submitted: {url} -> {emoji_name}")
-            await message.reply(f"Added to **{emoji_name}**", mention_author=False)
+            logger.info(f"Song submitted: {url} -> {playlist_name}")
+            await message.reply(f"Added to **{playlist_name}**", mention_author=False)
         else:
             error_msg = result.get("message", "Unknown error")
             logger.warning(f"Song submission failed: {error_msg}")
