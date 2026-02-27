@@ -60,7 +60,6 @@ async def threshold_error(ctx, error):
 @bot.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     react_name = payload.emoji.name
-    logger.info(f"Reaction received: name={react_name!r} id={payload.emoji.id} message={payload.message_id}")
     if react_name not in EMOJI_MAP:
         return
 
@@ -79,7 +78,6 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     try:
         message = await channel.fetch_message(payload.message_id)
     except discord.NotFound:
-        logger.warning("Message not found")
         return
 
     # Find the matching reaction and check count
@@ -88,16 +86,13 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             match = reaction.emoji in EMOJI_MAP
         else:
             match = reaction.emoji.name == react_name
-        logger.info(f"  Checking reaction: {reaction.emoji!r} count={reaction.count} match={match} threshold={react_threshold}")
         if match and reaction.count >= react_threshold:
             break
     else:
-        logger.info("No matching reaction met threshold")
         return
 
     # Extract URL from message text
     urls = URL_PATTERN.findall(message.content)
-    logger.info(f"URLs found in message: {urls}")
     if not urls:
         return
 

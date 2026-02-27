@@ -19,7 +19,7 @@ Discord Bot (src/bot.py) → POST /add_song → Flask app → yt-dlp download �
 ```
 src/
   config.py          # Centralized config (all paths, settings from .env)
-  bot.py             # Discord bot — watches :1radio:/:2radio:/:3radio: reacts, threshold=3
+  bot.py             # Discord bot — watches ❤️/:2radio:/:3radio: reacts, configurable threshold (!threshold)
   app.py             # App factory, registers blueprints, /health endpoint
   db.py              # get_db() context manager
   auth.py            # @requires_auth decorator (HTTP Basic Auth)
@@ -55,6 +55,8 @@ src/
 
 - Refactoring complete (Feb 2026): all 8 phases implemented
 - Discord bot integrated into project (was previously external)
-- Production running on corecore containers (5 services: app, bot, icecast, streams, nginx)
+- Production running on corecore containers (6 services: app, bot, pot-provider, icecast, streams, nginx)
 - Bot connected as corecore#8570 (app ID: 1476853275742699623)
+- Emoji mapping: ❤️→1radio, :2radio:→2radio, :3radio:→3radio
+- **BLOCKER:** YouTube downloads failing — "Sign in to confirm you're not a bot" even with cookies + PO token provider. See `TROUBLESHOOTING-youtube-bot-detection.md`. Non-YouTube sites (SoundCloud, Bandcamp) work fine.
 - Health check: `curl https://stream.rashomon.blue/health`
