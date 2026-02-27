@@ -130,6 +130,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     except requests.RequestException as e:
         logger.error(f"Error posting to add_song: {e}")
         submitted.discard(key)
+        await message.reply(f"Something went wrong adding the song. Try again?", mention_author=False)
 
 
 if __name__ == "__main__":
