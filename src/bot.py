@@ -142,6 +142,8 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         "emoji_id": playlist_emoji_id,
     }
 
+    status_msg = await message.reply(f"Downloading for **{playlist_name}**...", mention_author=False)
+
     try:
         resp = requests.post(
             ADD_SONG_URL,
@@ -154,16 +156,16 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         if resp.status_code == 200:
             submitted.add(key)
             logger.info(f"Song submitted: {url} -> {playlist_name}")
-            await message.reply(f"Added to **{playlist_name}**", mention_author=False)
+            await status_msg.edit(content=f"Added to **{playlist_name}**")
         else:
             error_msg = result.get("message", "Unknown error")
             logger.warning(f"Song submission failed: {error_msg}")
-            await message.reply(f"Failed to add: {error_msg}", mention_author=False)
+            await status_msg.edit(content=f"Failed to add: {error_msg}")
 
     except requests.RequestException as e:
         logger.error(f"Error posting to add_song: {e}")
         submitted.discard(key)
-        await message.reply(f"Something went wrong adding the song. Try again?", mention_author=False)
+        await status_msg.edit(content="Something went wrong adding the song. Try again?")
 
 
 if __name__ == "__main__":
