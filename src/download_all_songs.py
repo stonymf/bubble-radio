@@ -18,9 +18,7 @@ def main():
     """
     # Set up command line arguments
     parser = argparse.ArgumentParser(description='Download all songs in the database that are missing.')
-    parser.add_argument('--browser', choices=['chrome', 'firefox', 'edge', 'safari', 'opera', 'brave'], 
-                        default='chrome', help='Browser to extract cookies from (default: chrome)')
-    parser.add_argument('--delay-min', type=float, default=2.0, 
+    parser.add_argument('--delay-min', type=float, default=2.0,
                         help='Minimum delay between downloads in seconds (default: 2.0)')
     parser.add_argument('--delay-max', type=float, default=5.0, 
                         help='Maximum delay between downloads in seconds (default: 5.0)')
@@ -43,9 +41,6 @@ def main():
         print("Setting delay-min equal to delay-max")
         args.delay_min = args.delay_max
     
-    # Update the browser choice in downloader.py (using environment variable)
-    os.environ['BROWSER_CHOICE'] = args.browser
-    print(f"Using cookies from {args.browser.capitalize()} browser")
     print(f"Delay between downloads: {args.delay_min}-{args.delay_max} seconds")
     print(f"Batch size: {args.batch_size} songs with {args.batch_break} second break between batches")
     

@@ -3,7 +3,7 @@
 # Script to download all songs in the database
 
 # Set good default values for stealth operation
-ARGS="--delay-min 7.0 --delay-max 15.0 --batch-size 5 --batch-break 60.0 --browser chrome"
+ARGS="--delay-min 7.0 --delay-max 15.0 --batch-size 5 --batch-break 60.0"
 
 echo "Starting download of all songs in the database..."
 echo "This might take a while depending on how many songs are missing."
