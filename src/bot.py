@@ -60,6 +60,7 @@ async def threshold_error(ctx, error):
 @bot.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     react_name = payload.emoji.name
+    logger.info(f"Reaction received: name={react_name!r} id={payload.emoji.id} message={payload.message_id}")
     if react_name not in EMOJI_MAP:
         return
 
