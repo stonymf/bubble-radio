@@ -58,5 +58,5 @@ src/
 - Production running on corecore containers (6 services: app, bot, pot-provider, icecast, streams, nginx)
 - Bot connected as corecore#8570 (app ID: 1476853275742699623)
 - Emoji mapping: ❤️→1radio, :2radio:→2radio, :3radio:→3radio
-- **BLOCKER:** YouTube downloads failing — "Sign in to confirm you're not a bot" even with cookies + PO token provider. See `TROUBLESHOOTING-youtube-bot-detection.md`. Non-YouTube sites (SoundCloud, Bandcamp) work fine.
+- YouTube downloads working again (Feb 2026) — required complete cookie export (with `LOGIN_INFO`, `__Secure-*` cookies) + `remote_components: {"ejs": "github"}` in yt-dlp opts. See `TROUBLESHOOTING-youtube-bot-detection.md` for details. Cookies will need periodic re-export (~6 months).
 - Health check: `curl https://stream.rashomon.blue/health`
