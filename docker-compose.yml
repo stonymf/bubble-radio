@@ -12,7 +12,13 @@ services:
       - ./playlists:/usr/src/app/playlists
       - ./db.db:/usr/src/app/db.db
       - ${DOWNLOAD_DIRECTORY}:/usr/src/app/downloads
-    command: /bin/bash -c "gunicorn --bind 0.0.0.0:5000 --timeout 120 src.app:app"
+    command: /bin/bash -c "gunicorn --bind 0.0.0.0:5000 --timeout 120 --preload --workers 1 src.app:app"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
   bubble-radio-icecast:
     image: pltnk/icecast2

@@ -12,3 +12,6 @@ liq_config/*
 disallow.txt
 __pycache__/
 .DS_Store
+deploy.sh
+logs/deploy.log
+cookies/
