@@ -1,6 +1,6 @@
 # Dockerfile.liquidsoap
 # Use an official Debian base image
-FROM debian:buster
+FROM debian:bookworm
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
