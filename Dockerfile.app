@@ -4,11 +4,10 @@ FROM python:3.10-slim
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Install ffmpeg and Node.js (needed by yt-dlp for YouTube JS challenge solving)
+# Install ffmpeg, curl, and Deno (JS runtime for yt-dlp YouTube challenge solving)
 RUN apt-get update && \
-    apt-get install -y ffmpeg curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs && \
+    apt-get install -y ffmpeg curl unzip && \
+    curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

@@ -46,7 +46,10 @@ def sanitize_filename(filename):
 def _get_ydl_opts(extra_opts=None):
     opts = {
         "format": "bestaudio/best",
-        "js_runtimes": {"node": {}},
+        "extractor_args": {
+            "youtube": {"player_client": ["default"]},
+            "youtubepot-bgutilhttp": {"base_url": ["http://pot-provider:4416"]},
+        },
     }
     if os.path.exists(COOKIE_FILE):
         opts["cookiefile"] = COOKIE_FILE

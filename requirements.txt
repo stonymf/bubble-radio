@@ -7,3 +7,4 @@ yt-dlp
 APScheduler==3.10.4
 ffmpeg==1.4
 discord.py>=2.3.0
+bgutil-ytdlp-pot-provider

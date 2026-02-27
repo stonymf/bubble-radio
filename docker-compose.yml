@@ -1,11 +1,18 @@
 version: '3.8'
 services:
+  pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    init: true
+    restart: unless-stopped
+
   bubble-radio-app:
     build:
       context: .
       dockerfile: Dockerfile.app
     env_file:
       - .env
+    depends_on:
+      - pot-provider
     volumes:
       - .:/usr/src/app
       - ./logs:/usr/src/app/logs
