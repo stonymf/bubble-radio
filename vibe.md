@@ -59,4 +59,4 @@ src/
 - Bot connected as corecore#8570 (app ID: 1476853275742699623)
 - Emoji mapping: ❤️→1radio, :2radio:→2radio, :3radio:→3radio
 - YouTube downloads working again (Feb 2026) — required complete cookie export (with `LOGIN_INFO`, `__Secure-*` cookies) + `remote_components: {"ejs": "github"}` in yt-dlp opts. See `TROUBLESHOOTING-youtube-bot-detection.md` for details. Cookies will need periodic re-export (~6 months).
-- Health check: `curl https://stream.rashomon.blue/health`
+- Health check: `curl https://stream.void.beauty/health`
