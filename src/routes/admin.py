@@ -20,9 +20,9 @@ def admin():
         conn.row_factory = __import__('sqlite3').Row
         cursor = conn.cursor()
 
-        cursor.execute("SELECT DISTINCT emoji_name FROM downloads")
-        emoji_names = [row['emoji_name'] for row in cursor.fetchall()]
-        emoji_names.sort()
+        cursor.execute("SELECT DISTINCT emoji_id, emoji_name FROM downloads")
+        station_map = {row['emoji_name']: row['emoji_id'] for row in cursor.fetchall()}
+        emoji_names = sorted(station_map.keys())
 
         stations = {}
 
@@ -61,7 +61,7 @@ def admin():
                 'playlist': playlist
             }
 
-    return render_template("admin.html", stations=stations)
+    return render_template("admin.html", stations=stations, station_map=station_map)
 
 
 @bp.route("/admin/edit_song", methods=['POST'])
@@ -71,35 +71,53 @@ def edit_song():
     title = request.form.get('title')
     username = request.form.get('username')
     url = request.form.get('url')
+    new_emoji_name = request.form.get('emoji_name')
+    new_emoji_id = request.form.get('emoji_id')
 
     try:
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE downloads
-                SET title = ?, username = ?, url = ?
-                WHERE id = ?
-            """, (title, username, url, song_id))
+
+            # Get current station before update
+            cursor.execute("SELECT emoji_id, emoji_name, filename FROM downloads WHERE id = ?", (song_id,))
+            old = cursor.fetchone()
+            if not old:
+                return jsonify({"status": "error", "message": "Song not found"}), 404
+            old_emoji_id, old_emoji_name, filename = old
+
+            # Build update
+            if new_emoji_name and new_emoji_id:
+                cursor.execute("""
+                    UPDATE downloads
+                    SET title = ?, username = ?, url = ?, emoji_name = ?, emoji_id = ?
+                    WHERE id = ?
+                """, (title, username, url, new_emoji_name, new_emoji_id, song_id))
+            else:
+                cursor.execute("""
+                    UPDATE downloads
+                    SET title = ?, username = ?, url = ?
+                    WHERE id = ?
+                """, (title, username, url, song_id))
             conn.commit()
 
-            cursor.execute("SELECT filename FROM downloads WHERE id = ?", (song_id,))
-            filename = cursor.fetchone()
+            # Update MP3 tag
             if filename:
                 try:
-                    mp3_path = os.path.join(DOWNLOAD_DIR, filename[0])
+                    mp3_path = os.path.join(DOWNLOAD_DIR, filename)
                     if os.path.exists(mp3_path):
                         audio = MP3(mp3_path, ID3=ID3)
                         audio.tags.add(TIT2(encoding=3, text=title))
                         audio.save()
-                        logger.info(f"Updated MP3 tag for file: {filename[0]}")
+                        logger.info(f"Updated MP3 tag for file: {filename}")
                 except Exception as e:
                     logger.error(f"Error updating MP3 tag: {e}")
 
-            cursor.execute("SELECT emoji_id, emoji_name FROM downloads WHERE id = ?", (song_id,))
-            emoji_info = cursor.fetchone()
-            if emoji_info:
-                emoji_id, emoji_name = emoji_info
-                schedule_playlist_refresh(emoji_id, emoji_name)
+            # Refresh old station playlist
+            schedule_playlist_refresh(old_emoji_id, old_emoji_name)
+
+            # If station changed, refresh new station too
+            if new_emoji_name and new_emoji_name != old_emoji_name:
+                schedule_playlist_refresh(new_emoji_id, new_emoji_name)
 
         return jsonify({"status": "success"})
     except Exception as e:

@@ -1,349 +1,421 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Bubble Radio Admin</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="/static/css/main.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>admin — corecore</title>
+    <style>
+        :root {
+            --blue: #0000ee;
+            --white: #ffffff;
+            --surface: #f0f0ff;
+            --muted: #8888cc;
+            --border: #d8d8f0;
+            --error: #ff0000;
+            --radius: 4px;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--white);
+            color: var(--blue);
+            margin: 0;
+            padding: 1.5rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            letter-spacing: -0.04em;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: inherit; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        button { font: inherit; cursor: pointer; }
+
+        /* Layout */
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .header-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 1.5rem; }
+        .header-meta a { color: var(--muted); }
+        .header-meta a:hover { color: var(--blue); }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+        .tab {
+            border: none; border-bottom: 2px solid transparent; background: transparent;
+            color: var(--muted); padding: 0.4rem 0; font-size: 0.8rem; font-family: inherit;
+            cursor: pointer;
+        }
+        .tab:hover { color: var(--blue); }
+        .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+        .tab .count { font-size: 0.7rem; color: var(--muted); }
+        .tab.active .count { color: var(--blue); }
+
+        /* Sub-tabs */
+        .sub-tabs { display: flex; gap: 0.75rem; padding: 0.5rem 0; }
+        .sub-tab {
+            border: none; background: transparent; color: var(--muted);
+            padding: 0.2rem 0; font-size: 0.75rem; font-family: inherit; cursor: pointer;
+        }
+        .sub-tab:hover { color: var(--blue); }
+        .sub-tab.active { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; border: none; }
+        th {
+            border-bottom: 1px solid var(--border); font-size: 0.7rem; color: var(--muted);
+            text-align: left; padding: 0.5rem 0.5rem; font-weight: 400;
+        }
+        td { padding: 0.5rem; font-size: 0.8rem; }
+        tr:hover td { background: var(--surface); }
+        td.title { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        td.user { color: var(--muted); white-space: nowrap; }
+        td.date { color: var(--muted); white-space: nowrap; font-size: 0.75rem; }
+        td.actions { white-space: nowrap; text-align: right; }
+
+        /* Buttons */
+        .btn {
+            border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--white); color: var(--blue); padding: 4px 8px;
+            font-size: 0.7rem; font-family: inherit; cursor: pointer;
+        }
+        .btn:hover { background: var(--blue); color: var(--white); }
+        .btn-danger { border-color: var(--error); color: var(--error); }
+        .btn-danger:hover { background: var(--error); color: var(--white); }
+        .btn-icon {
+            border: none; background: transparent; color: var(--muted);
+            cursor: pointer; padding: 2px 4px; font-size: 0.8rem;
+        }
+        .btn-icon:hover { color: var(--blue); }
+        .btn-icon.delete:hover { color: var(--error); }
+
+        /* Tab content */
+        .station-panel { display: none; }
+        .station-panel.active { display: block; }
+        .sub-panel { display: none; }
+        .sub-panel.active { display: block; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            display: none; align-items: center; justify-content: center; z-index: 50;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            max-width: 440px; width: 100%; background: var(--white);
+            border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem;
+        }
+        .modal h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; }
+        .field { margin-bottom: 0.75rem; }
+        .field label { display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 0.2rem; }
+        .field input, .field select {
+            width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--white); color: var(--blue); padding: 6px 8px;
+            font-size: 0.85rem; font-family: inherit;
+        }
+        .field input:focus, .field select:focus { outline: none; border-color: var(--blue); }
+        .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+
+        /* Source link */
+        a.src { color: var(--muted); font-size: 0.75rem; }
+        a.src:hover { color: var(--blue); }
+
+        /* Empty state */
+        .empty { color: var(--muted); padding: 2rem 0; font-size: 0.8rem; }
+
+        /* Station header */
+        .station-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 0 0;
+        }
+        .station-header h2 { font-size: 0.9rem; font-weight: 700; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--white); }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 8px 16px;
+            border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--white); color: var(--blue); font-size: 0.8rem;
+            opacity: 0; transition: opacity 150ms; pointer-events: none; z-index: 100;
+        }
+        .toast.show { opacity: 1; }
+        .toast.error { border-color: var(--error); color: var(--error); }
+    </style>
 </head>
 <body>
-    <div class="terminal">
-        <div class="terminal-bar">
-            <span>BUBBLE RADIO ADMIN</span>
-            <span id="datetime">...</span>
-        </div>
-        
-        <p class="header-actions">
-            <a href="/demo" class="back-link">RETURN TO STREAM LIST</a>
-            <a href="/download_db" class="action-btn download-btn">DOWNLOAD DB BACKUP</a>
-        </p>
-        
-        <h3>Stations:</h3>
-        <!-- Main tabs for stations -->
-        <div class="main-tabs">
-            {% for station_name, station_data in stations.items() %}
-            <button class="main-tab-btn {% if loop.first %}active{% endif %}" onclick="openMainTab(event, '{{ station_name }}')">
-                {{ station_name }} <span class="song-count">[{{ station_data.all|length }}]</span>
-            </button>
-            {% endfor %}
-        </div>
-        
-        <!-- Station content tabs -->
-        {% for station_name, station_data in stations.items() %}
-        <div id="{{ station_name }}" class="main-tab-content {% if loop.first %}active{% endif %}">
-            <!-- Station header with download button -->
-            <div class="station-header">
-                <h2>{{ station_name }}</h2>
-                <a href="/download_playlist/{{ station_name }}" class="action-btn download-btn">DOWNLOAD PLAYLIST</a>
-            </div>
-            
-            <!-- Sub tabs for different views -->
-            <div class="sub-tabs">
-                <button class="sub-tab-btn active" onclick="openSubTab(event, '{{ station_name }}-all')">All</button>
-                <button class="sub-tab-btn" onclick="openSubTab(event, '{{ station_name }}-playlist')">Playlist</button>
-            </div>
-            
-            <!-- All songs sub tab -->
-            <div id="{{ station_name }}-all" class="sub-tab-content active">
-                <h3>All Songs ({{ station_data.all|length }})</h3>
-                {% if station_data.all %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="col-title">TITLE</th>
-                            <th class="col-user">ADDED BY</th>
-                            <th class="col-date">DATE ADDED</th>
-                            <th class="col-source">SRC</th>
-                            <th class="col-operations">OPERATIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for song in station_data.all %}
-                        <tr data-id="{{ song['id'] }}">
-                            <td class="col-title">{{ song['title'] }}</td>
-                            <td class="col-user">{{ song['username'] }}</td>
-                            <td class="col-date">{{ song['timestamp'] }}</td>
-                            <td class="col-source"><a href="{{ song['url'] }}" target="_blank" style="color: white;">view</a></td>
-                            <td class="col-operations">
-                                <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">EDIT</button>
-                                <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DEL</button>
-                                <a href="/download/{{ song['id'] }}" class="action-btn download-btn">DL</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p>No songs found in this station.</p>
-                {% endif %}
-            </div>
-            
-            <!-- Playlist sub tab -->
-            <div id="{{ station_name }}-playlist" class="sub-tab-content">
-                <h3>Current Playlist ({{ station_data.playlist|length }})</h3>
-                {% if station_data.playlist %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="col-position">#</th>
-                            <th class="col-title">TITLE</th>
-                            <th class="col-user">ADDED BY</th>
-                            <th class="col-date">DATE ADDED</th>
-                            <th class="col-source">SRC</th>
-                            <th class="col-operations">OPERATIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for song in station_data.playlist %}
-                        <tr data-id="{{ song['id'] }}">
-                            <td class="col-position">{{ loop.index }}</td>
-                            <td class="col-title">{{ song['title'] }}</td>
-                            <td class="col-user">{{ song['username'] }}</td>
-                            <td class="col-date">{{ song['timestamp'] }}</td>
-                            <td class="col-source"><a href="{{ song['url'] }}" target="_blank" style="color: white;">view</a></td>
-                            <td class="col-operations">
-                                <button class="action-btn edit-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}" data-username="{{ song['username'] }}" data-url="{{ song['url'] }}">EDIT</button>
-                                <button class="action-btn delete-btn" data-id="{{ song['id'] }}" data-title="{{ song['title'] }}">DEL</button>
-                                <a href="/download/{{ song['id'] }}" class="action-btn download-btn">DL</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p>No playlist file found for this station.</p>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content terminal">
-            <div class="terminal-bar">
-                <span>EDIT RECORD</span>
-                <span class="close" onclick="closeModal()">&times;</span>
-            </div>
-            <h2>MODIFY DATABASE ENTRY</h2>
-            <form id="editForm">
-                <input type="hidden" id="songId" name="id">
-                <div class="form-group">
-                    <label for="title">TITLE:</label>
-                    <input type="text" id="songTitle" name="title" required>
-                </div>
-                <div class="form-group">
-                    <label for="username">ADDED BY:</label>
-                    <input type="text" id="songUsername" name="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="url">SOURCE URL:</label>
-                    <input type="text" id="songUrl" name="url" required>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">CANCEL</button>
-                    <button type="button" class="save-btn" onclick="saveSong()">SAVE</button>
-                </div>
-            </form>
-        </div>
+<div class="container">
+    <h1>corecore admin</h1>
+    <div class="header-meta">
+        <a href="/download_db">download db</a>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content terminal">
-            <div class="terminal-bar">
-                <span>WARNING</span>
-                <span class="close" onclick="closeDeleteModal()">&times;</span>
+    <div class="tabs">
+        {% for name in stations.keys()|sort %}
+        <button class="tab{% if loop.first %} active{% endif %}" data-station="{{ name }}">
+            {{ name }} <span class="count">{{ stations[name].all|length }}</span>
+        </button>
+        {% endfor %}
+    </div>
+
+    {% for name in stations.keys()|sort %}
+    <div class="station-panel{% if loop.first %} active{% endif %}" id="panel-{{ name }}">
+        <div class="station-header">
+            <div class="sub-tabs">
+                <button class="sub-tab active" data-sub="{{ name }}-all">all</button>
+                <button class="sub-tab" data-sub="{{ name }}-playlist">playlist</button>
             </div>
-            <h2>CONFIRM DELETION</h2>
-            <p>DELETE RECORD: <strong id="deleteTitle"></strong>?</p>
-            <p class="warning-text">THIS OPERATION CANNOT BE REVERSED</p>
-            <div class="form-actions">
-                <button type="button" class="cancel-btn" onclick="closeDeleteModal()">CANCEL</button>
-                <button type="button" class="delete-btn" onclick="deleteSong()">DELETE</button>
-            </div>
-            <input type="hidden" id="deleteId">
+            <a href="/download_playlist/{{ name }}" class="btn" style="font-size:0.7rem;">download .m3u</a>
+        </div>
+
+        <div class="sub-panel active" id="sub-{{ name }}-all">
+            {% if stations[name].all %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>title</th>
+                        <th>added by</th>
+                        <th>date</th>
+                        <th>src</th>
+                        <th style="text-align:right;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for song in stations[name].all %}
+                    <tr>
+                        <td class="title">{{ song.title }}</td>
+                        <td class="user">{{ song.username }}</td>
+                        <td class="date">{{ song.timestamp[:10] if song.timestamp else '' }}</td>
+                        <td><a href="{{ song.url }}" target="_blank" class="src">link</a></td>
+                        <td class="actions">
+                            <button class="btn-icon edit-btn"
+                                data-id="{{ song.id }}"
+                                data-title="{{ song.title }}"
+                                data-username="{{ song.username }}"
+                                data-url="{{ song.url }}"
+                                data-station="{{ name }}"
+                                title="edit">&#9998;</button>
+                            <button class="btn-icon delete delete-btn"
+                                data-id="{{ song.id }}"
+                                data-title="{{ song.title }}"
+                                title="delete">&times;</button>
+                            <a href="/download/{{ song.id }}" class="btn-icon" title="download">&#8595;</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">no songs in this station.</p>
+            {% endif %}
+        </div>
+
+        <div class="sub-panel" id="sub-{{ name }}-playlist">
+            {% if stations[name].playlist %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>title</th>
+                        <th>added by</th>
+                        <th>date</th>
+                        <th>src</th>
+                        <th style="text-align:right;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for song in stations[name].playlist %}
+                    <tr>
+                        <td style="color:var(--muted);font-size:0.75rem;">{{ loop.index }}</td>
+                        <td class="title">{{ song.title }}</td>
+                        <td class="user">{{ song.username }}</td>
+                        <td class="date">{{ song.timestamp[:10] if song.timestamp else '' }}</td>
+                        <td><a href="{{ song.url }}" target="_blank" class="src">link</a></td>
+                        <td class="actions">
+                            <button class="btn-icon edit-btn"
+                                data-id="{{ song.id }}"
+                                data-title="{{ song.title }}"
+                                data-username="{{ song.username }}"
+                                data-url="{{ song.url }}"
+                                data-station="{{ name }}"
+                                title="edit">&#9998;</button>
+                            <button class="btn-icon delete delete-btn"
+                                data-id="{{ song.id }}"
+                                data-title="{{ song.title }}"
+                                title="delete">&times;</button>
+                            <a href="/download/{{ song.id }}" class="btn-icon" title="download">&#8595;</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">no playlist file for this station.</p>
+            {% endif %}
         </div>
     </div>
-    
-    <script>
-        // Display date and time
-        function updateDateTime() {
-            var now = new Date();
-            var dateStr = now.toISOString().replace('T', ' ').substring(0, 19);
-            document.getElementById('datetime').textContent = dateStr;
+    {% endfor %}
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editOverlay">
+    <div class="modal">
+        <h2>edit song</h2>
+        <form id="editForm">
+            <input type="hidden" id="editId" name="id">
+            <div class="field">
+                <label>title</label>
+                <input type="text" id="editTitle" name="title" required>
+            </div>
+            <div class="field">
+                <label>added by</label>
+                <input type="text" id="editUsername" name="username" required>
+            </div>
+            <div class="field">
+                <label>source url</label>
+                <input type="text" id="editUrl" name="url" required>
+            </div>
+            <div class="field">
+                <label>station</label>
+                <select id="editStation" name="emoji_name">
+                    {% for name, eid in station_map.items()|sort %}
+                    <option value="{{ name }}" data-emoji-id="{{ eid }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" id="editEmojiId" name="emoji_id">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn" onclick="closeEdit()">cancel</button>
+                <button type="button" class="btn" onclick="saveEdit()">save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteOverlay">
+    <div class="modal">
+        <h2>delete song</h2>
+        <p style="margin-bottom:0.5rem;">delete <strong id="deleteTitle"></strong>?</p>
+        <p style="color:var(--error);font-size:0.75rem;margin-bottom:1rem;">this cannot be undone.</p>
+        <input type="hidden" id="deleteId">
+        <div class="modal-actions">
+            <button type="button" class="btn" onclick="closeDelete()">cancel</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// Toast
+function toast(msg, err) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (err ? ' error' : '');
+    setTimeout(() => t.className = 'toast', 2000);
+}
+
+// Station tabs
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.station-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.station).classList.add('active');
+    });
+});
+
+// Sub-tabs
+document.querySelectorAll('.sub-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const panel = tab.closest('.station-panel');
+        panel.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+        panel.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('sub-' + tab.dataset.sub).classList.add('active');
+    });
+});
+
+// Edit
+const editOverlay = document.getElementById('editOverlay');
+const editStation = document.getElementById('editStation');
+const editEmojiId = document.getElementById('editEmojiId');
+
+editStation.addEventListener('change', () => {
+    editEmojiId.value = editStation.selectedOptions[0].dataset.emojiId;
+});
+
+document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('editId').value = btn.dataset.id;
+        document.getElementById('editTitle').value = btn.dataset.title;
+        document.getElementById('editUsername').value = btn.dataset.username;
+        document.getElementById('editUrl').value = btn.dataset.url;
+        editStation.value = btn.dataset.station;
+        editEmojiId.value = editStation.selectedOptions[0].dataset.emojiId;
+        editOverlay.classList.add('open');
+    });
+});
+
+function closeEdit() { editOverlay.classList.remove('open'); }
+
+function saveEdit() {
+    fetch('/admin/edit_song', {
+        method: 'POST',
+        body: new FormData(document.getElementById('editForm'))
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'success') {
+            toast('saved');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            toast('error: ' + d.message, true);
         }
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
-        
-        // Main tab switching function
-        function openMainTab(evt, stationName) {
-            // Hide all main tab content
-            var tabContent = document.getElementsByClassName("main-tab-content");
-            for (var i = 0; i < tabContent.length; i++) {
-                tabContent[i].classList.remove("active");
-            }
-            
-            // Remove active class from all main tab buttons
-            var tabButtons = document.getElementsByClassName("main-tab-btn");
-            for (var i = 0; i < tabButtons.length; i++) {
-                tabButtons[i].classList.remove("active");
-            }
-            
-            // Show the selected tab content and mark the button as active
-            document.getElementById(stationName).classList.add("active");
-            evt.currentTarget.classList.add("active");
-            
-            // By default, show the first sub-tab
-            var subTabs = document.getElementById(stationName).getElementsByClassName("sub-tab-content");
-            if (subTabs.length > 0) {
-                for (var i = 0; i < subTabs.length; i++) {
-                    subTabs[i].classList.remove("active");
-                }
-                subTabs[0].classList.add("active");
-                
-                // Mark the first sub-tab button as active
-                var subButtons = document.getElementById(stationName).getElementsByClassName("sub-tab-btn");
-                for (var i = 0; i < subButtons.length; i++) {
-                    subButtons[i].classList.remove("active");
-                }
-                if (subButtons.length > 0) {
-                    subButtons[0].classList.add("active");
-                }
-            }
+        closeEdit();
+    })
+    .catch(() => { toast('request failed', true); closeEdit(); });
+}
+
+// Delete
+const deleteOverlay = document.getElementById('deleteOverlay');
+let deleteId = null;
+
+document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        deleteId = btn.dataset.id;
+        document.getElementById('deleteTitle').textContent = btn.dataset.title;
+        deleteOverlay.classList.add('open');
+    });
+});
+
+function closeDelete() { deleteOverlay.classList.remove('open'); }
+
+function confirmDelete() {
+    const fd = new FormData();
+    fd.append('id', deleteId);
+    fetch('/admin/delete_song', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'success') {
+            toast('deleted');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            toast('error: ' + d.message, true);
         }
-        
-        // Sub tab switching function
-        function openSubTab(evt, tabName) {
-            // Find the parent station container
-            var parentStation = evt.currentTarget.closest(".main-tab-content");
-            
-            // Hide all sub tab content in this station
-            var subTabs = parentStation.getElementsByClassName("sub-tab-content");
-            for (var i = 0; i < subTabs.length; i++) {
-                subTabs[i].classList.remove("active");
-            }
-            
-            // Remove active class from all sub tab buttons
-            var subButtons = parentStation.getElementsByClassName("sub-tab-btn");
-            for (var i = 0; i < subButtons.length; i++) {
-                subButtons[i].classList.remove("active");
-            }
-            
-            // Show the selected sub tab content and mark the button as active
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
-        }
-        
-        // Edit functions
-        var editModal = document.getElementById("editModal");
-        
-        function openEditModal(id, title, username, url) {
-            document.getElementById("songId").value = id;
-            document.getElementById("songTitle").value = title;
-            document.getElementById("songUsername").value = username;
-            document.getElementById("songUrl").value = url;
-            editModal.style.display = "block";
-        }
-        
-        function closeModal() {
-            editModal.style.display = "none";
-        }
-        
-        function saveSong() {
-            var formData = new FormData(document.getElementById("editForm"));
-            
-            fetch("/admin/edit_song", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert("RECORD UPDATED SUCCESSFULLY");
-                    window.location.reload(); // Reload to show updated data
-                } else {
-                    alert("ERROR: " + data.message);
-                }
-                closeModal();
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("ERROR: OPERATION FAILED");
-                closeModal();
-            });
-        }
-        
-        // Delete functions
-        var deleteModal = document.getElementById("deleteModal");
-        
-        function confirmDelete(id, title) {
-            document.getElementById("deleteId").value = id;
-            document.getElementById("deleteTitle").textContent = title;
-            deleteModal.style.display = "block";
-        }
-        
-        function closeDeleteModal() {
-            deleteModal.style.display = "none";
-        }
-        
-        function deleteSong() {
-            var id = document.getElementById("deleteId").value;
-            var formData = new FormData();
-            formData.append("id", id);
-            
-            fetch("/admin/delete_song", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert("RECORD DELETED SUCCESSFULLY");
-                    window.location.reload(); // Reload to show updated data
-                } else {
-                    alert("ERROR: " + data.message);
-                }
-                closeDeleteModal();
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("ERROR: OPERATION FAILED");
-                closeDeleteModal();
-            });
-        }
-        
-        // Setup event listeners for edit and delete buttons
-        document.addEventListener('DOMContentLoaded', function() {
-            // Edit button event listeners
-            document.querySelectorAll('.edit-btn').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var id = this.getAttribute('data-id');
-                    var title = this.getAttribute('data-title');
-                    var username = this.getAttribute('data-username');
-                    var url = this.getAttribute('data-url');
-                    openEditModal(id, title, username, url);
-                });
-            });
-            
-            // Delete button event listeners
-            document.querySelectorAll('.delete-btn').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var id = this.getAttribute('data-id');
-                    var title = this.getAttribute('data-title');
-                    confirmDelete(id, title);
-                });
-            });
-        });
-        
-        // Close modals when clicking outside
-        window.onclick = function(event) {
-            if (event.target == editModal) {
-                closeModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
-        }
-    </script>
+        closeDelete();
+    })
+    .catch(() => { toast('request failed', true); closeDelete(); });
+}
+
+// Close modals on overlay click
+[editOverlay, deleteOverlay].forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+</script>
 </body>
-</html> 
+</html>
