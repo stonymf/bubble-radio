@@ -110,7 +110,7 @@ def download_db():
             mem,
             mimetype='application/json',
             as_attachment=True,
-            download_name=f"bubble_radio_db_{timestamp}.json"
+            download_name=f"corecore_db_{timestamp}.json"
         )
     except Exception as e:
         logger.error(f"Error exporting database: {e}")

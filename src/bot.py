@@ -16,7 +16,7 @@ EMOJI_MAP = {
     "3radio":       ("3radio", "1217466244350083072"),
 }
 URL_PATTERN = re.compile(r'https?://\S+')
-APP_BASE_URL = "http://bubble-radio-app:5000"
+APP_BASE_URL = "http://corecore-app:5000"
 ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
 
 # Track submitted (message_id, emoji_name) to avoid duplicate POSTs

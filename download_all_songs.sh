@@ -12,7 +12,7 @@ echo "Use Ctrl+C to stop the process at any time."
 echo
 
 # Run the Python script in the Docker container
-docker exec bubble-radio-bubble-radio-app-1 python -m src.download_all_songs $ARGS
+docker exec corecore-corecore-app-1 python -m src.download_all_songs $ARGS
 
 echo
 echo "Download process completed." 

@@ -18,7 +18,7 @@ DISALLOW_FILE = os.path.join(BASE_DIR, "disallow.txt")
 # App settings
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
 BASE_STREAM_URL = os.getenv("BASE_STREAM_URL", "https://corecore.void.beauty/stream")
-ICECAST_INTERNAL_URL = os.getenv("ICECAST_INTERNAL_URL", "http://bubble-radio-icecast:8000")
+ICECAST_INTERNAL_URL = os.getenv("ICECAST_INTERNAL_URL", "http://corecore-icecast:8000")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "bubbleradio")
 MAX_LENGTH = int(os.getenv("MAX_LENGTH", "4140"))
