@@ -31,9 +31,9 @@ src/
   routes/
     api.py           # /add_song (Discord bot endpoint)
     streams.py       # /demo, /demo/<stream>, /get_original_url/<stream>
-    admin.py         # /admin, /admin/edit_song, /admin/delete_song
+    admin.py         # /admin (Blue Design System UI), /admin/edit_song, /admin/delete_song
     archive.py       # /feedthechao, /download_archive, /download_progress
-    downloads.py     # /download/<id>, /download_playlist/<name>, /download_db
+    downloads.py     # /download/<id>, /play/<id>, /download_playlist/<name>, /download_db
 ```
 
 ## Key Decisions
@@ -48,16 +48,14 @@ src/
 - **Server:** rashomon.blue at `~/dev/corecore`
 - **Auto-deploy:** Cron checks `origin/main` every minute, pulls + rebuilds if changed
 - **GitHub:** github.com/stonymf/corecore (private)
-- **Remote:** `corecore` (not `origin` — `origin` still points to old bubble-radio repo)
-- **Shared storage:** Downloads at `/mnt/bandit/bubble-radio` (external mount)
+- **Remote:** `corecore` on GitHub
+- **Shared storage:** Downloads at `/mnt/bandit/corecore` (external mount)
 
 ## Current State
 
-- Refactoring complete (Feb 2026): all 8 phases implemented
-- Discord bot integrated into project (was previously external)
 - Production running on corecore containers (6 services: app, bot, pot-provider, icecast, streams, nginx)
-- Bot connected as corecore#8570 (app ID: 1476853275742699623)
 - Emoji mapping: ❤️→1radio, :2radio:→2radio, :3radio:→3radio
-- YouTube downloads working again (Feb 2026) — required complete cookie export (with `LOGIN_INFO`, `__Secure-*` cookies) + `remote_components: {"ejs": "github"}` in yt-dlp opts. See `TROUBLESHOOTING-youtube-bot-detection.md` for details. Cookies will need periodic re-export (~6 months).
 - Streams served at `corecore.void.beauty/stream/{1radio,2radio,3radio}` (stream.void.beauty redirects there)
-- Health check: `curl https://corecore.void.beauty/stream/health`
+- Admin panel at `corecore.void.beauty/admin` — Blue Design System, inline audio playback, station transfers, edit/delete
+- External nginx at `/etc/nginx/sites-enabled/void.beauty` (certbot-managed SSL — re-run certbot after scp'ing config changes)
+- YouTube downloads working — requires cookie export + `remote_components: {"ejs": "github"}`. See `TROUBLESHOOTING-youtube-bot-detection.md`.
