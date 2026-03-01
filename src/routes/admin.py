@@ -10,7 +10,8 @@ from src.config import PLAYLIST_DIR, DOWNLOAD_DIR, RECENT_SONG_COUNT
 
 logger = configure_logging('app.log', 'app_logger')
 
-bp = Blueprint('admin', __name__)
+bp = Blueprint('admin', __name__, url_prefix=None)
+bp.strict_slashes = False
 
 
 @bp.route("/admin")
