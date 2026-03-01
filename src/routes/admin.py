@@ -29,7 +29,7 @@ def admin():
 
         for emoji_name in emoji_names:
             cursor.execute("""
-                SELECT id, title, url, username, timestamp
+                SELECT id, title, url, username, timestamp, filename
                 FROM downloads
                 WHERE emoji_name = ?
                 ORDER BY timestamp DESC
@@ -47,7 +47,7 @@ def admin():
                         for mp3_path in mp3_paths:
                             filename = os.path.basename(mp3_path)
                             cursor.execute("""
-                                SELECT id, title, url, username, timestamp
+                                SELECT id, title, url, username, timestamp, filename
                                 FROM downloads
                                 WHERE filename = ?
                             """, (filename,))

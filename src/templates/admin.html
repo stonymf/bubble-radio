@@ -118,6 +118,21 @@
         a.src { color: var(--muted); font-size: 0.75rem; }
         a.src:hover { color: var(--blue); }
 
+        /* Audio player */
+        .title-play { cursor: pointer; }
+        .title-play:hover { text-decoration: underline; }
+        .title-play.playing { color: var(--blue); font-weight: 700; }
+        tr.player-row td {
+            padding: 0 0.5rem 0.5rem;
+            border: none;
+        }
+        tr.player-row:hover td { background: var(--surface); }
+        tr.player-row audio {
+            width: 100%;
+            height: 28px;
+            outline: none;
+        }
+
         /* Empty state */
         .empty { color: var(--muted); padding: 2rem 0; font-size: 0.8rem; }
 
@@ -184,7 +199,7 @@
                 <tbody>
                     {% for song in stations[name].all %}
                     <tr>
-                        <td class="title">{{ song.title }}</td>
+                        <td class="title">{% if song.filename %}<span class="title-play" data-id="{{ song.id }}">{{ song.title }}</span>{% else %}{{ song.title }}{% endif %}</td>
                         <td class="user">{{ song.username }}</td>
                         <td class="date">{{ song.timestamp[:10] if song.timestamp else '' }}</td>
                         <td><a href="{{ song.url }}" target="_blank" class="src">link</a></td>
@@ -228,7 +243,7 @@
                     {% for song in stations[name].playlist %}
                     <tr>
                         <td style="color:var(--muted);font-size:0.75rem;">{{ loop.index }}</td>
-                        <td class="title">{{ song.title }}</td>
+                        <td class="title">{% if song.filename %}<span class="title-play" data-id="{{ song.id }}">{{ song.title }}</span>{% else %}{{ song.title }}{% endif %}</td>
                         <td class="user">{{ song.username }}</td>
                         <td class="date">{{ song.timestamp[:10] if song.timestamp else '' }}</td>
                         <td><a href="{{ song.url }}" target="_blank" class="src">link</a></td>
@@ -415,6 +430,63 @@ function confirmDelete() {
 // Close modals on overlay click
 [editOverlay, deleteOverlay].forEach(o => {
     o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// Audio player
+let activePlayer = null;
+let activeRow = null;
+let activeTitle = null;
+
+document.querySelectorAll('.title-play').forEach(el => {
+    el.addEventListener('click', () => {
+        const songId = el.dataset.id;
+        const tr = el.closest('tr');
+
+        // If clicking the same song, toggle off
+        if (activeTitle === el) {
+            activeRow.remove();
+            activePlayer.pause();
+            activeTitle.classList.remove('playing');
+            activePlayer = null;
+            activeRow = null;
+            activeTitle = null;
+            return;
+        }
+
+        // Remove existing player
+        if (activeRow) {
+            activeRow.remove();
+            activePlayer.pause();
+            activeTitle.classList.remove('playing');
+        }
+
+        // Create player row
+        const cols = tr.querySelectorAll('td').length;
+        const playerRow = document.createElement('tr');
+        playerRow.className = 'player-row';
+        const td = document.createElement('td');
+        td.colSpan = cols;
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = '/play/' + songId;
+        audio.autoplay = true;
+        td.appendChild(audio);
+        playerRow.appendChild(td);
+        tr.after(playerRow);
+
+        el.classList.add('playing');
+        activePlayer = audio;
+        activeRow = playerRow;
+        activeTitle = el;
+
+        audio.addEventListener('ended', () => {
+            playerRow.remove();
+            el.classList.remove('playing');
+            activePlayer = null;
+            activeRow = null;
+            activeTitle = null;
+        });
+    });
 });
 </script>
 </body>

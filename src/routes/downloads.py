@@ -41,6 +41,30 @@ def download(song_id):
         return "Error processing download request", 500
 
 
+@bp.route("/play/<int:song_id>")
+@requires_auth
+def play(song_id):
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT filename FROM downloads WHERE id = ?", (song_id,))
+            result = cursor.fetchone()
+
+        if result:
+            filename = result[0]
+            file_path = os.path.join(DOWNLOAD_DIR, filename)
+
+            if os.path.exists(file_path):
+                return send_file(file_path, mimetype='audio/mpeg')
+            else:
+                return "File not found", 404
+        else:
+            return "Song not found", 404
+    except Exception as e:
+        logger.error(f"Error playing file: {e}")
+        return "Error processing play request", 500
+
+
 @bp.route("/download_playlist/<playlist_name>")
 @requires_auth
 def download_playlist(playlist_name):
