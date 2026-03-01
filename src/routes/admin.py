@@ -14,7 +14,7 @@ bp = Blueprint('admin', __name__, url_prefix=None)
 bp.strict_slashes = False
 
 
-@bp.route("/admin")
+@bp.route("/admin", strict_slashes=False)
 @requires_auth
 def admin():
     with get_db() as conn:
