@@ -10,8 +10,7 @@ logger = logging.getLogger('bot')
 
 # Maps reaction emoji name → (playlist emoji_name, playlist emoji_id)
 EMOJI_MAP = {
-    "\u2764\ufe0f": ("1radio", "1217470040685936793"),
-    "\u2764":       ("1radio", "1217470040685936793"),  # heart without variation selector
+    "1radio":       ("1radio", "1217470040685936793"),
     "2radio":       ("2radio", "1217470007378706503"),
     "3radio":       ("3radio", "1217466244350083072"),
 }
