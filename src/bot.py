@@ -2,7 +2,7 @@ import re
 import logging
 import requests
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from src.config import SECRET_KEY, DISCORD_BOT_TOKEN, DISCORD_REACT_THRESHOLD
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -17,6 +17,8 @@ EMOJI_MAP = {
 URL_PATTERN = re.compile(r'https?://\S+')
 APP_BASE_URL = "http://corecore-app:5000"
 ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
+TEST_DOWNLOADS_URL = f"{APP_BASE_URL}/test_downloads"
+DM_USERNAME = "tonymf"
 
 # Track submitted (message_id, emoji_name) to avoid duplicate POSTs
 submitted = set()
@@ -28,6 +30,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
 intents.guilds = True
+intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -58,6 +61,45 @@ def _set_setting(key, value):
         logger.error(f"Failed to persist setting {key}: {e}")
 
 
+@tasks.loop(hours=24)
+async def daily_download_test():
+    logger.info("Running daily download test...")
+    try:
+        resp = requests.post(
+            TEST_DOWNLOADS_URL,
+            headers={"Authorization": SECRET_KEY},
+            timeout=300,
+        )
+        results = resp.json()
+    except Exception as e:
+        logger.error(f"Daily download test request failed: {e}")
+        results = {"all": {"status": "error", "message": str(e)}}
+
+    failures = {k: v for k, v in results.items() if v.get("status") != "ok"}
+    if not failures:
+        logger.info("Daily download test passed for all platforms")
+        return
+
+    # DM the admin
+    logger.warning(f"Daily download test failures: {failures}")
+    user = discord.utils.find(
+        lambda u: u.name == DM_USERNAME, bot.get_all_members()
+    )
+    if not user:
+        logger.error(f"Could not find user {DM_USERNAME} to send DM")
+        return
+
+    lines = ["**Download test failures:**"]
+    for platform, result in failures.items():
+        lines.append(f"- **{platform}**: {result.get('message', 'unknown error')}")
+    await user.send("\n".join(lines))
+
+
+@daily_download_test.before_loop
+async def before_daily_test():
+    await bot.wait_until_ready()
+
+
 @bot.event
 async def on_ready():
     global react_threshold
@@ -65,6 +107,8 @@ async def on_ready():
     if saved is not None:
         react_threshold = int(saved)
         logger.info(f"Loaded react_threshold={react_threshold} from DB")
+    if not daily_download_test.is_running():
+        daily_download_test.start()
     logger.info(f"Bot connected as {bot.user}")
 
 
@@ -91,6 +135,30 @@ async def threshold_error(ctx, error):
         return
     if isinstance(error, (commands.MissingRequiredArgument, commands.BadArgument)):
         await ctx.reply(f"Usage: `!threshold <number>` (currently **{react_threshold}**)")
+
+
+@bot.command(name="testdownloads")
+async def run_test_downloads(ctx):
+    if ctx.channel.name != COMMAND_CHANNEL:
+        return
+    msg = await ctx.reply("Running download tests...")
+    try:
+        resp = requests.post(
+            TEST_DOWNLOADS_URL,
+            headers={"Authorization": SECRET_KEY},
+            timeout=300,
+        )
+        results = resp.json()
+    except Exception as e:
+        await msg.edit(content=f"Test request failed: {e}")
+        return
+
+    lines = []
+    for platform, result in results.items():
+        status = "pass" if result.get("status") == "ok" else "FAIL"
+        detail = f" — {result.get('message')}" if status == "FAIL" else ""
+        lines.append(f"**{platform}**: {status}{detail}")
+    await msg.edit(content="\n".join(lines))
 
 
 @bot.event
