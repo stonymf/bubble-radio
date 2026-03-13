@@ -62,6 +62,7 @@ def _get_ydl_opts(extra_opts=None):
     }
     if os.path.exists(COOKIE_FILE):
         opts["cookiefile"] = COOKIE_FILE
+        opts["cookies_update"] = False
     if extra_opts:
         opts.update(extra_opts)
     return opts
