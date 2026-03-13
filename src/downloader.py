@@ -2,11 +2,12 @@ import os
 import re
 import sqlite3
 import yt_dlp
+import requests as http_requests
 from urllib.parse import urlparse
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, TIT2
 from src.logger_config import configure_logging
-from src.config import DB_PATH, DOWNLOAD_DIR, COOKIE_FILE, MAX_LENGTH, get_disallowed_domains
+from src.config import DB_PATH, DOWNLOAD_DIR, COOKIE_FILE, MAX_LENGTH, YT_PROXY_URL, YT_PROXY_SECRET, get_disallowed_domains
 
 logger = configure_logging('downloader.log', 'downloader_logger')
 
@@ -51,6 +52,15 @@ def sanitize_filename(filename):
     return filename
 
 
+def _is_youtube_url(url):
+    domain = urlparse(url).netloc.lower()
+    return any(d in domain for d in ("youtube.com", "youtu.be"))
+
+
+def _use_yt_proxy():
+    return bool(YT_PROXY_URL and YT_PROXY_SECRET)
+
+
 def _get_ydl_opts(extra_opts=None):
     opts = {
         "format": "bestaudio/best",
@@ -81,6 +91,20 @@ def _validate_url(url):
 
 
 def _extract_info(url):
+    if _is_youtube_url(url) and _use_yt_proxy():
+        logger.info(f"Extracting info via YouTube proxy for URL: {url}")
+        resp = http_requests.post(
+            f"{YT_PROXY_URL}/cc/extract",
+            json={"url": url, "secret": YT_PROXY_SECRET},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        if "error" in data:
+            raise ValueError(data["error"])
+        logger.info(f"Proxy extraction complete for URL: {url}")
+        return data
+
     logger.info(f"Starting extraction info for URL: {url}")
     with yt_dlp.YoutubeDL(_get_ydl_opts({"skip_download": True})) as ydl:
         info_dict = ydl.extract_info(url, download=False)
@@ -93,6 +117,23 @@ def _extract_info(url):
 
 
 def _download_and_convert(url, outtmpl):
+    if _is_youtube_url(url) and _use_yt_proxy():
+        logger.info(f"Downloading via YouTube proxy for URL: {url}")
+        resp = http_requests.post(
+            f"{YT_PROXY_URL}/cc/download",
+            json={"url": url, "secret": YT_PROXY_SECRET},
+            timeout=300,
+        )
+        resp.raise_for_status()
+        if resp.headers.get("Content-Type", "").startswith("application/json"):
+            data = resp.json()
+            raise ValueError(data.get("error", "Proxy download failed"))
+        mp3_path = f"{outtmpl}.mp3"
+        with open(mp3_path, "wb") as f:
+            f.write(resp.content)
+        logger.info(f"Proxy download completed for URL: {url}")
+        return
+
     ydl_opts = _get_ydl_opts({
         "postprocessors": [{
             "key": "FFmpegExtractAudio",

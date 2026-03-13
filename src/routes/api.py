@@ -1,7 +1,7 @@
 import os
 import tempfile
 from flask import Blueprint, jsonify, request
-from src.downloader import download_audio, _get_ydl_opts
+from src.downloader import download_audio, _get_ydl_opts, _extract_info, _download_and_convert
 from src.config import SECRET_KEY
 from src.db import get_db
 from src.logger_config import configure_logging
@@ -50,18 +50,8 @@ def test_downloads():
     for platform, url in TEST_URLS.items():
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                outtmpl = os.path.join(tmpdir, "test.%(ext)s")
-                opts = _get_ydl_opts({
-                    "postprocessors": [{
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": "mp3",
-                        "preferredquality": "192",
-                    }],
-                    "outtmpl": outtmpl,
-                })
-                with yt_dlp.YoutubeDL(opts) as ydl:
-                    ydl.extract_info(url, download=True)
-                # Verify an mp3 was created
+                outtmpl = os.path.join(tmpdir, "test")
+                _download_and_convert(url, outtmpl)
                 files = [f for f in os.listdir(tmpdir) if f.endswith(".mp3")]
                 if files:
                     results[platform] = {"status": "ok"}

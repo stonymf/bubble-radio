@@ -22,6 +22,8 @@ ICECAST_INTERNAL_URL = os.getenv("ICECAST_INTERNAL_URL", "http://corecore-icecas
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "bubbleradio")
 MAX_LENGTH = int(os.getenv("MAX_LENGTH", "4140"))
+YT_PROXY_URL = os.getenv("YT_PROXY_URL", "")
+YT_PROXY_SECRET = os.getenv("YT_PROXY_SECRET", "")
 RECENT_SONG_COUNT = int(os.getenv("RECENT_SONG_COUNT", "100"))
 ENABLE_IDENTS = os.getenv("ENABLE_IDENTS", "false").lower() == "true"
 IDENT_INTERVAL = int(os.getenv("IDENT_INTERVAL", "8"))
