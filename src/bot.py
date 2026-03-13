@@ -68,10 +68,14 @@ async def on_ready():
     logger.info(f"Bot connected as {bot.user}")
 
 
+COMMAND_CHANNEL = "dev-chat"
+
+
 @bot.command(name="threshold")
-@commands.has_permissions(manage_guild=True)
 async def set_threshold(ctx, value: int):
     global react_threshold
+    if ctx.channel.name != COMMAND_CHANNEL:
+        return
     if value < 1:
         await ctx.reply("Threshold must be at least 1")
         return
@@ -83,9 +87,9 @@ async def set_threshold(ctx, value: int):
 
 @set_threshold.error
 async def threshold_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.reply("You need Manage Server permission to change the threshold")
-    elif isinstance(error, (commands.MissingRequiredArgument, commands.BadArgument)):
+    if ctx.channel.name != COMMAND_CHANNEL:
+        return
+    if isinstance(error, (commands.MissingRequiredArgument, commands.BadArgument)):
         await ctx.reply(f"Usage: `!threshold <number>` (currently **{react_threshold}**)")
 
 
