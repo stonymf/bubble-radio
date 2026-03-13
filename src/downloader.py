@@ -55,14 +55,11 @@ def _get_ydl_opts(extra_opts=None):
     opts = {
         "format": "bestaudio/best",
         "extractor_args": {
-            "youtube": {"player_client": ["default"]},
+            "youtube": {"player_client": ["mweb"]},
             "youtubepot-bgutilhttp": {"base_url": ["http://pot-provider:4416"]},
         },
         "remote_components": ["ejs:github"],
     }
-    if os.path.exists(COOKIE_FILE):
-        opts["cookiefile"] = COOKIE_FILE
-        opts["cookies_update"] = False
     if extra_opts:
         opts.update(extra_opts)
     return opts

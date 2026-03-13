@@ -61,5 +61,4 @@ src/
 - CORS headers for stream endpoints handled in Docker `nginx.conf` (with `always` flag), NOT in external nginx. `/get_original_url/` also has CORS headers.
 - Bot commands restricted to `#dev-chat` channel. Members intent enabled in Discord Developer Portal.
 - Daily download test: bot runs `!testdownloads` equivalent every 24h, DMs `tonymf` on failure. Tests YouTube, SoundCloud, Bandcamp via `/test_downloads` endpoint.
-- **YouTube downloads BROKEN (Mar 2026)** — cookies keep getting invalidated. `cookies_update=False` added to prevent yt-dlp from overwriting cookie file. `remote_components` format changed from dict to list (`["ejs:github"]`). See `TROUBLESHOOTING-youtube-bot-detection.md`.
-- Cookies are gitignored — must be scp'd to server manually: `scp cookies/youtube.com.txt rashomon.blue:~/dev/corecore/cookies/`
+- **YouTube downloads — fix pending deploy (Mar 2026)** — root cause: YouTube IP-binds cookies, invalidates them when used from datacenter. Switched to cookie-free `mweb` client + PO tokens via bgutil-ytdlp-pot-provider. Cookies no longer used. See `TROUBLESHOOTING-youtube-bot-detection.md`.
