@@ -57,5 +57,6 @@ src/
 - Emoji mapping: ❤️→1radio, :2radio:→2radio, :3radio:→3radio
 - Streams served at `corecore.void.beauty/stream/{1radio,2radio,3radio}` (stream.void.beauty redirects there)
 - Admin panel at `corecore.void.beauty/admin` — Blue Design System, inline audio playback, station transfers, edit/delete
-- External nginx at `/etc/nginx/sites-enabled/void.beauty` (certbot-managed SSL — re-run certbot after scp'ing config changes)
+- External nginx at `/etc/nginx/sites-enabled/void.beauty` (certbot-managed SSL — re-run certbot after scp'ing config changes). **Important:** `sites-enabled` must be a symlink to `sites-available`, not a copy — run `sudo ln -sf /etc/nginx/sites-available/void.beauty /etc/nginx/sites-enabled/void.beauty` if in doubt
+- CORS headers for stream endpoints handled in Docker `nginx.conf` (with `always` flag), NOT in external nginx
 - YouTube downloads working — requires cookie export + `remote_components: {"ejs": "github"}`. See `TROUBLESHOOTING-youtube-bot-detection.md`.
