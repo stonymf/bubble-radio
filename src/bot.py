@@ -19,7 +19,7 @@ APP_BASE_URL = "http://corecore-app:5000"
 ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
 TEST_DOWNLOADS_URL = f"{APP_BASE_URL}/test_downloads"
 TEST_URL_ENDPOINT = f"{APP_BASE_URL}/test_url"
-TEST_REACT_NAME = "id"
+TEST_REACT_NAMES = {"id", "\U0001F194"}  # custom :id: or built-in 🆔
 DM_USERNAME = "tonymf"
 
 # Track submitted (message_id, emoji_name) to avoid duplicate POSTs
@@ -170,7 +170,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     react_name = payload.emoji.name
 
     # Handle test react — bypasses threshold, downloads to temp dir
-    if react_name == TEST_REACT_NAME:
+    if react_name in TEST_REACT_NAMES:
         channel = bot.get_channel(payload.channel_id)
         if channel is None:
             try:
