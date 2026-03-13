@@ -98,6 +98,8 @@ async def daily_download_test():
 @daily_download_test.before_loop
 async def before_daily_test():
     await bot.wait_until_ready()
+    import asyncio
+    await asyncio.sleep(60)  # wait for app container to be ready
 
 
 @bot.event
