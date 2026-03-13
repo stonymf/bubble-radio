@@ -61,4 +61,4 @@ src/
 - CORS headers for stream endpoints handled in Docker `nginx.conf` (with `always` flag), NOT in external nginx. `/get_original_url/` also has CORS headers.
 - Bot commands restricted to `#dev-chat` channel. Members intent enabled in Discord Developer Portal.
 - Daily download test: bot runs `!testdownloads` equivalent every 24h, DMs `tonymf` on failure. Tests YouTube, SoundCloud, Bandcamp via `/test_downloads` endpoint.
-- **YouTube downloads — fix pending deploy (Mar 2026)** — root cause: YouTube IP-binds cookies, invalidates them when used from datacenter. Switched to cookie-free `mweb` client + PO tokens via bgutil-ytdlp-pot-provider. Cookies no longer used. See `TROUBLESHOOTING-youtube-bot-detection.md`.
+- **YouTube downloads FIXED (Mar 2026)** — YouTube blocks datacenter IPs. Solution: proxy service on smilerelax.net (residential IP) at `/cc/download` and `/cc/extract`. Corecore routes YouTube URLs through proxy via `YT_PROXY_URL`/`YT_PROXY_SECRET` env vars. SoundCloud/Bandcamp still use local yt-dlp. Proxy source: `villageglobal/cc-youtube/`.
