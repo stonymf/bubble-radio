@@ -65,6 +65,26 @@ def admin():
     return render_template("admin.html", stations=stations, station_map=station_map)
 
 
+@bp.route("/admin/search")
+@requires_auth
+def search():
+    q = request.args.get("q", "").strip()
+    if not q:
+        return jsonify([])
+
+    with get_db() as conn:
+        conn.row_factory = __import__('sqlite3').Row
+        rows = conn.execute("""
+            SELECT id, title, url, username, timestamp, filename, emoji_name
+            FROM downloads
+            WHERE title LIKE ? OR username LIKE ? OR url LIKE ?
+            ORDER BY timestamp DESC
+            LIMIT 50
+        """, (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
+
+    return jsonify([dict(r) for r in rows])
+
+
 @bp.route("/admin/edit_song", methods=['POST'])
 @requires_auth
 def edit_song():

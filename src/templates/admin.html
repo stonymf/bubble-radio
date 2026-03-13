@@ -133,6 +133,23 @@
             outline: none;
         }
 
+        /* Search */
+        .search-wrap { margin-bottom: 1rem; }
+        .search-wrap input {
+            width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--white); color: var(--blue); padding: 8px 10px;
+            font-size: 0.85rem; font-family: inherit;
+        }
+        .search-wrap input:focus { outline: none; border-color: var(--blue); }
+        .search-wrap input::placeholder { color: var(--muted); }
+        .search-results { display: none; }
+        .search-results.active { display: block; }
+        .search-results .station-tag {
+            display: inline-block; font-size: 0.65rem; color: var(--muted);
+            border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px;
+            margin-left: 0.4rem; vertical-align: middle;
+        }
+
         /* Empty state */
         .empty { color: var(--muted); padding: 2rem 0; font-size: 0.8rem; }
 
@@ -166,6 +183,27 @@
         <a href="/download_db">download db</a>
     </div>
 
+    <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="search all songs..." autocomplete="off">
+    </div>
+
+    <div class="search-results" id="searchResults">
+        <table>
+            <thead>
+                <tr>
+                    <th>title</th>
+                    <th>added by</th>
+                    <th>date</th>
+                    <th>src</th>
+                    <th style="text-align:right;"></th>
+                </tr>
+            </thead>
+            <tbody id="searchBody"></tbody>
+        </table>
+        <p class="empty" id="searchEmpty" style="display:none;">no results.</p>
+    </div>
+
+    <div id="stationContent">
     <div class="tabs">
         {% for name in stations.keys()|sort %}
         <button class="tab{% if loop.first %} active{% endif %}" data-station="{{ name }}">
@@ -271,6 +309,7 @@
         </div>
     </div>
     {% endfor %}
+    </div>
 </div>
 
 <!-- Edit Modal -->
@@ -488,6 +527,122 @@ document.querySelectorAll('.title-play').forEach(el => {
         });
     });
 });
+
+// Search
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const searchBody = document.getElementById('searchBody');
+const searchEmpty = document.getElementById('searchEmpty');
+const stationContent = document.getElementById('stationContent');
+let searchTimer = null;
+
+searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    const q = searchInput.value.trim();
+    if (!q) {
+        searchResults.classList.remove('active');
+        stationContent.style.display = '';
+        searchBody.innerHTML = '';
+        searchEmpty.style.display = 'none';
+        return;
+    }
+    searchTimer = setTimeout(() => fetchSearch(q), 300);
+});
+
+function fetchSearch(q) {
+    fetch('/admin/search?q=' + encodeURIComponent(q))
+    .then(r => r.json())
+    .then(rows => {
+        stationContent.style.display = 'none';
+        searchResults.classList.add('active');
+        searchBody.innerHTML = '';
+        if (!rows.length) {
+            searchEmpty.style.display = '';
+            return;
+        }
+        searchEmpty.style.display = 'none';
+        rows.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td class="title">' + (s.filename
+                    ? '<span class="title-play" data-id="' + s.id + '">' + esc(s.title) + '</span>'
+                    : esc(s.title))
+                + '<span class="station-tag">' + esc(s.emoji_name) + '</span></td>'
+                + '<td class="user">' + esc(s.username) + '</td>'
+                + '<td class="date">' + (s.timestamp ? s.timestamp.slice(0, 10) : '') + '</td>'
+                + '<td><a href="' + esc(s.url) + '" target="_blank" class="src">link</a></td>'
+                + '<td class="actions">'
+                + '<button class="btn-icon edit-btn" data-id="' + s.id + '" data-title="' + esc(s.title) + '" data-username="' + esc(s.username) + '" data-url="' + esc(s.url) + '" data-station="' + esc(s.emoji_name) + '" title="edit">&#9998;</button>'
+                + '<button class="btn-icon delete delete-btn" data-id="' + s.id + '" data-title="' + esc(s.title) + '" title="delete">&times;</button>'
+                + '<a href="/download/' + s.id + '" class="btn-icon" title="download">&#8595;</a>'
+                + '</td>';
+            searchBody.appendChild(tr);
+        });
+        wireSearchActions();
+    })
+    .catch(() => toast('search failed', true));
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+}
+
+function wireSearchActions() {
+    searchBody.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('editId').value = btn.dataset.id;
+            document.getElementById('editTitle').value = btn.dataset.title;
+            document.getElementById('editUsername').value = btn.dataset.username;
+            document.getElementById('editUrl').value = btn.dataset.url;
+            editStation.value = btn.dataset.station;
+            editEmojiId.value = editStation.selectedOptions[0].dataset.emojiId;
+            editOverlay.classList.add('open');
+        });
+    });
+    searchBody.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            deleteId = btn.dataset.id;
+            document.getElementById('deleteTitle').textContent = btn.dataset.title;
+            deleteOverlay.classList.add('open');
+        });
+    });
+    searchBody.querySelectorAll('.title-play').forEach(el => {
+        el.addEventListener('click', () => {
+            const songId = el.dataset.id;
+            const tr = el.closest('tr');
+            if (activeTitle === el) {
+                activeRow.remove(); activePlayer.pause();
+                activeTitle.classList.remove('playing');
+                activePlayer = activeRow = activeTitle = null;
+                return;
+            }
+            if (activeRow) {
+                activeRow.remove(); activePlayer.pause();
+                activeTitle.classList.remove('playing');
+            }
+            const cols = tr.querySelectorAll('td').length;
+            const playerRow = document.createElement('tr');
+            playerRow.className = 'player-row';
+            const td = document.createElement('td');
+            td.colSpan = cols;
+            const audio = document.createElement('audio');
+            audio.controls = true;
+            audio.src = '/play/' + songId;
+            audio.autoplay = true;
+            td.appendChild(audio);
+            playerRow.appendChild(td);
+            tr.after(playerRow);
+            el.classList.add('playing');
+            activePlayer = audio; activeRow = playerRow; activeTitle = el;
+            audio.addEventListener('ended', () => {
+                playerRow.remove(); el.classList.remove('playing');
+                activePlayer = activeRow = activeTitle = null;
+            });
+        });
+    });
+}
 </script>
 </body>
 </html>
