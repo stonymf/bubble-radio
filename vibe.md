@@ -56,8 +56,8 @@ src/
 - Production running on corecore containers (6 services: app, bot, pot-provider, icecast, streams, nginx)
 - Emoji mapping: ❤️→1radio, :2radio:→2radio, :3radio:→3radio
 - Streams served at `corecore.void.beauty/stream/{1radio,2radio,3radio}` (stream.void.beauty redirects there)
-- Admin panel at `corecore.void.beauty/admin` — Blue Design System, inline audio playback, station transfers, edit/delete
-- External nginx at `/etc/nginx/sites-enabled/void.beauty` (certbot-managed SSL — re-run certbot after scp'ing config changes). **Important:** `sites-enabled` must be a symlink to `sites-available`, not a copy — run `sudo ln -sf /etc/nginx/sites-available/void.beauty /etc/nginx/sites-enabled/void.beauty` if in doubt
+- Admin panel at `corecore.void.beauty/admin` — Blue Design System, inline audio playback, station transfers, edit/delete, realtime search across all stations
+- External nginx at `/etc/nginx/sites-enabled/void.beauty` (certbot-managed SSL — re-run certbot after scp'ing config changes). **Important:** `sites-enabled` must be a symlink to `sites-available`, not a copy — run `sudo ln -sf /etc/nginx/sites-available/void.beauty /etc/nginx/sites-enabled/void.beauty` if in doubt. Route regex must include all Flask endpoints (`play`, `admin/search`, etc.) — if a new route 404s in production, check this first.
 - CORS headers for stream endpoints handled in Docker `nginx.conf` (with `always` flag), NOT in external nginx. `/get_original_url/` also has CORS headers.
 - Bot commands restricted to `#dev-chat` channel. Members intent enabled in Discord Developer Portal.
 - Daily download test: bot runs `!testdownloads` equivalent every 24h, DMs `tonymf` on failure. Tests YouTube, SoundCloud, Bandcamp via `/test_downloads` endpoint.
