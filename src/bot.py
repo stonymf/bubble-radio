@@ -18,6 +18,8 @@ URL_PATTERN = re.compile(r'https?://\S+')
 APP_BASE_URL = "http://corecore-app:5000"
 ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
 TEST_DOWNLOADS_URL = f"{APP_BASE_URL}/test_downloads"
+TEST_URL_ENDPOINT = f"{APP_BASE_URL}/test_url"
+TEST_REACT_NAME = "id"
 DM_USERNAME = "tonymf"
 
 # Track submitted (message_id, emoji_name) to avoid duplicate POSTs
@@ -166,6 +168,43 @@ async def run_test_downloads(ctx):
 @bot.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     react_name = payload.emoji.name
+
+    # Handle test react — bypasses threshold, downloads to temp dir
+    if react_name == TEST_REACT_NAME:
+        channel = bot.get_channel(payload.channel_id)
+        if channel is None:
+            try:
+                channel = await bot.fetch_channel(payload.channel_id)
+            except discord.NotFound:
+                return
+        try:
+            message = await channel.fetch_message(payload.message_id)
+        except discord.NotFound:
+            return
+        urls = URL_PATTERN.findall(message.content)
+        if not urls:
+            return
+        status_msg = await message.reply("Testing download...", mention_author=False)
+        try:
+            resp = requests.post(
+                TEST_URL_ENDPOINT,
+                json={"url": urls[0]},
+                headers={"Authorization": SECRET_KEY},
+                timeout=300,
+            )
+            result = resp.json()
+            if result.get("status") == "ok":
+                title = result.get("title", "?")
+                duration = result.get("duration", 0)
+                mins = int(duration) // 60
+                secs = int(duration) % 60
+                await status_msg.edit(content=f"Download OK — **{title}** ({mins}:{secs:02d})")
+            else:
+                await status_msg.edit(content=f"Download failed: {result.get('message', 'unknown')}")
+        except Exception as e:
+            await status_msg.edit(content=f"Test failed: {e}")
+        return
+
     if react_name not in EMOJI_MAP:
         return
 

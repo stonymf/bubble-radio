@@ -64,6 +64,33 @@ def test_downloads():
     return jsonify(results), 200
 
 
+@bp.route("/test_url", methods=['POST'])
+def test_url():
+    if request.headers.get("Authorization") != SECRET_KEY:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    url = request.json.get("url")
+    if not url:
+        return jsonify({"status": "error", "message": "Missing url"}), 400
+
+    try:
+        info = _extract_info(url)
+        title = info.get("title", "Unknown")
+        duration = info.get("duration", 0)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outtmpl = os.path.join(tmpdir, "test")
+            _download_and_convert(url, outtmpl)
+            files = [f for f in os.listdir(tmpdir) if f.endswith(".mp3")]
+            if files:
+                return jsonify({"status": "ok", "title": title, "duration": duration})
+            else:
+                return jsonify({"status": "error", "message": "No MP3 file produced"})
+    except Exception as e:
+        logger.error(f"Test URL failed for {url}: {e}")
+        return jsonify({"status": "error", "message": str(e)})
+
+
 @bp.route("/settings/<key>", methods=['GET'])
 def get_setting(key):
     if request.headers.get("Authorization") != SECRET_KEY:
