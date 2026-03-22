@@ -15,13 +15,13 @@ EMOJI_MAP = {
     "3radio":       ("3radio", "1217466244350083072"),
 }
 URL_PATTERN = re.compile(r'https?://\S+')
-MUSIC_DOMAINS = ("youtube.com", "youtu.be", "soundcloud.com", "bandcamp.com")
+IGNORED_DOMAINS = ("corecore.cc", "void.beauty")
 
 
 def _is_music_url(url):
-    """Check if URL is from a supported music platform."""
+    """Filter out URLs from our own sites that aren't music."""
     domain = url.lower()
-    return any(d in domain for d in MUSIC_DOMAINS)
+    return not any(d in domain for d in IGNORED_DOMAINS)
 
 APP_BASE_URL = "http://corecore-app:5000"
 ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
