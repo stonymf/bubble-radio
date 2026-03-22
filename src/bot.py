@@ -15,6 +15,14 @@ EMOJI_MAP = {
     "3radio":       ("3radio", "1217466244350083072"),
 }
 URL_PATTERN = re.compile(r'https?://\S+')
+MUSIC_DOMAINS = ("youtube.com", "youtu.be", "soundcloud.com", "bandcamp.com")
+
+
+def _is_music_url(url):
+    """Check if URL is from a supported music platform."""
+    domain = url.lower()
+    return any(d in domain for d in MUSIC_DOMAINS)
+
 APP_BASE_URL = "http://corecore-app:5000"
 ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
 TEST_DOWNLOADS_URL = f"{APP_BASE_URL}/test_downloads"
@@ -181,7 +189,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             message = await channel.fetch_message(payload.message_id)
         except discord.NotFound:
             return
-        urls = URL_PATTERN.findall(message.content)
+        urls = [u for u in URL_PATTERN.findall(message.content) if _is_music_url(u)]
         if not urls:
             return
         status_msg = await message.reply("Testing download...", mention_author=False)
@@ -236,8 +244,8 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     else:
         return
 
-    # Extract URL from message text
-    urls = URL_PATTERN.findall(message.content)
+    # Extract music URL from message text
+    urls = [u for u in URL_PATTERN.findall(message.content) if _is_music_url(u)]
     if not urls:
         return
 
