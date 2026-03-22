@@ -2,6 +2,7 @@ import re
 import logging
 import requests
 import discord
+import yt_dlp
 from discord.ext import commands, tasks
 from src.config import SECRET_KEY, DISCORD_BOT_TOKEN, DISCORD_REACT_THRESHOLD
 
@@ -15,13 +16,12 @@ EMOJI_MAP = {
     "3radio":       ("3radio", "1217466244350083072"),
 }
 URL_PATTERN = re.compile(r'https?://\S+')
-IGNORED_DOMAINS = ("corecore.cc", "void.beauty")
+_YT_DLP_EXTRACTORS = yt_dlp.list_extractors()
 
 
-def _is_music_url(url):
-    """Filter out URLs from our own sites that aren't music."""
-    domain = url.lower()
-    return not any(d in domain for d in IGNORED_DOMAINS)
+def _is_supported_url(url):
+    """Check if yt-dlp has an extractor that handles this URL."""
+    return any(e.suitable(url) and e.ie_key() != "Generic" for e in _YT_DLP_EXTRACTORS)
 
 APP_BASE_URL = "http://corecore-app:5000"
 ADD_SONG_URL = f"{APP_BASE_URL}/add_song"
@@ -189,7 +189,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             message = await channel.fetch_message(payload.message_id)
         except discord.NotFound:
             return
-        urls = [u for u in URL_PATTERN.findall(message.content) if _is_music_url(u)]
+        urls = [u for u in URL_PATTERN.findall(message.content) if _is_supported_url(u)]
         if not urls:
             return
         status_msg = await message.reply("Testing download...", mention_author=False)
@@ -245,7 +245,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         return
 
     # Extract music URL from message text
-    urls = [u for u in URL_PATTERN.findall(message.content) if _is_music_url(u)]
+    urls = [u for u in URL_PATTERN.findall(message.content) if _is_supported_url(u)]
     if not urls:
         return
 
