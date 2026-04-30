@@ -36,7 +36,7 @@ def add_song():
 
 TEST_URLS = {
     "youtube": "https://www.youtube.com/watch?v=vKYIew27R0Y",
-    "soundcloud": "https://soundcloud.com/innerinnerlife/balmy-feat-josephine-moriko",
+    "soundcloud": "https://soundcloud.com/evo-natura/deskulling-music-lovers",
     "bandcamp": "https://rimo5.bandcamp.com/track/revoc-izaguf-vomir",
 }
 
