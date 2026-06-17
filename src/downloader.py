@@ -124,10 +124,19 @@ def _download_and_convert(url, outtmpl):
             json={"url": url, "secret": YT_PROXY_SECRET},
             timeout=300,
         )
-        resp.raise_for_status()
-        if resp.headers.get("Content-Type", "").startswith("application/json"):
-            data = resp.json()
-            raise ValueError(data.get("error", "Proxy download failed"))
+        content_type = resp.headers.get("Content-Type", "")
+        if resp.status_code != 200 or content_type.startswith("application/json"):
+            # The proxy returns the real yt-dlp error in a JSON body (usually
+            # with a 500). Surface it instead of a bare HTTP status so the daily
+            # test report carries the actual cause (e.g. "HTTP Error 403").
+            try:
+                error_msg = resp.json().get("error")
+            except ValueError:
+                error_msg = None
+            if error_msg:
+                raise ValueError(f"Proxy download failed: {error_msg}")
+            resp.raise_for_status()
+            raise ValueError("Proxy download failed")
         mp3_path = f"{outtmpl}.mp3"
         with open(mp3_path, "wb") as f:
             f.write(resp.content)
