@@ -269,7 +269,7 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             ADD_SONG_URL,
             json=data,
             headers={"Authorization": SECRET_KEY},
-            timeout=120,
+            timeout=420,
         )
         result = resp.json()
 
