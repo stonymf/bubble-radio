@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
 
   corecore-app:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile.app
@@ -28,6 +29,7 @@ services:
       start_period: 15s
 
   corecore-icecast:
+    restart: unless-stopped
     image: pltnk/icecast2
     env_file:
       - .env
@@ -35,6 +37,7 @@ services:
       - ./icecast.xml:/etc/icecast2/icecast.xml
 
   corecore-streams:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile.streams
@@ -66,6 +69,7 @@ services:
     restart: unless-stopped
 
   nginx:
+    restart: unless-stopped
     image: nginx:latest
     ports:
       - "${RADIO_PORT}:8000"
