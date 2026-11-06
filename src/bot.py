@@ -1,4 +1,5 @@
 import re
+import asyncio
 import logging
 import requests
 import discord
@@ -75,7 +76,8 @@ def _set_setting(key, value):
 async def daily_download_test():
     logger.info("Running daily download test...")
     try:
-        resp = requests.post(
+        resp = await asyncio.to_thread(
+            requests.post,
             TEST_DOWNLOADS_URL,
             headers={"Authorization": SECRET_KEY},
             timeout=300,
@@ -108,14 +110,13 @@ async def daily_download_test():
 @daily_download_test.before_loop
 async def before_daily_test():
     await bot.wait_until_ready()
-    import asyncio
     await asyncio.sleep(60)  # wait for app container to be ready
 
 
 @bot.event
 async def on_ready():
     global react_threshold
-    saved = _get_setting("react_threshold")
+    saved = await asyncio.to_thread(_get_setting, "react_threshold")
     if saved is not None:
         react_threshold = int(saved)
         logger.info(f"Loaded react_threshold={react_threshold} from DB")
@@ -136,7 +137,7 @@ async def set_threshold(ctx, value: int):
         await ctx.reply("Threshold must be at least 1")
         return
     react_threshold = value
-    _set_setting("react_threshold", value)
+    await asyncio.to_thread(_set_setting, "react_threshold", value)
     logger.info(f"Threshold changed to {value} by {ctx.author}")
     await ctx.reply(f"React threshold set to **{value}**")
 
@@ -155,7 +156,8 @@ async def run_test_downloads(ctx):
         return
     msg = await ctx.reply("Running download tests...")
     try:
-        resp = requests.post(
+        resp = await asyncio.to_thread(
+            requests.post,
             TEST_DOWNLOADS_URL,
             headers={"Authorization": SECRET_KEY},
             timeout=300,
@@ -194,7 +196,8 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             return
         status_msg = await message.reply("Testing download...", mention_author=False)
         try:
-            resp = requests.post(
+            resp = await asyncio.to_thread(
+                requests.post,
                 TEST_URL_ENDPOINT,
                 json={"url": urls[0]},
                 headers={"Authorization": SECRET_KEY},
@@ -262,30 +265,40 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         "emoji_id": playlist_emoji_id,
     }
 
-    status_msg = await message.reply(f"Downloading for **{playlist_name}**...", mention_author=False)
-
+    # Claim the key before the slow POST: the request no longer blocks the event
+    # loop, so further reacts on this message arrive while it is in flight and
+    # must not start a second download. Released unless the add succeeds, so a
+    # re-react retries.
+    submitted.add(key)
+    added = False
     try:
-        resp = requests.post(
-            ADD_SONG_URL,
-            json=data,
-            headers={"Authorization": SECRET_KEY},
-            timeout=420,
-        )
-        result = resp.json()
+        status_msg = await message.reply(f"Downloading for **{playlist_name}**...", mention_author=False)
 
-        if resp.status_code == 200:
-            submitted.add(key)
-            logger.info(f"Song submitted: {url} -> {playlist_name}")
-            await status_msg.edit(content=f"Added to **{playlist_name}**")
-        else:
-            error_msg = result.get("message", "Unknown error")
-            logger.warning(f"Song submission failed: {error_msg}")
-            await status_msg.edit(content=f"Failed to add: {error_msg}")
+        try:
+            resp = await asyncio.to_thread(
+                requests.post,
+                ADD_SONG_URL,
+                json=data,
+                headers={"Authorization": SECRET_KEY},
+                timeout=420,
+            )
+            result = resp.json()
 
-    except requests.RequestException as e:
-        logger.error(f"Error posting to add_song: {e}")
-        submitted.discard(key)
-        await status_msg.edit(content="Something went wrong adding the song. Try again?")
+            if resp.status_code == 200:
+                added = True
+                logger.info(f"Song submitted: {url} -> {playlist_name}")
+                await status_msg.edit(content=f"Added to **{playlist_name}**")
+            else:
+                error_msg = result.get("message", "Unknown error")
+                logger.warning(f"Song submission failed: {error_msg}")
+                await status_msg.edit(content=f"Failed to add: {error_msg}")
+
+        except requests.RequestException as e:
+            logger.error(f"Error posting to add_song: {e}")
+            await status_msg.edit(content="Something went wrong adding the song. Try again?")
+    finally:
+        if not added:
+            submitted.discard(key)
 
 
 if __name__ == "__main__":
