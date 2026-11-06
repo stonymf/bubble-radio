@@ -46,9 +46,10 @@ src/
 ## Deployment
 
 - **Server:** rashomon.blue at `~/dev/corecore`
-- **Auto-deploy:** Cron checks `origin/main` every minute, pulls + rebuilds if changed
+- **Auto-deploy:** Cron (`*/5`) runs `deploy.sh` (gitignored, lives on the box): fetches `main` from stonymf/corecore, pulls + `docker compose up --build -d` if changed. Log: `logs/deploy.log`. Uncommitted edits on the box to a file an incoming commit touches make the pull fail every run — keep the prod checkout clean.
+- **Weekly rebuild:** Cron (`17 11 * * 2`, Tue 11:17 UTC) runs `rebuild-weekly.sh`: rebuilds app + bot images with `--pull --no-cache` so the unpinned yt-dlp stays current between deploys. Streams drop for a few seconds. Logs to `logs/deploy.log`.
 - **GitHub:** github.com/stonymf/corecore (private)
-- **Remote:** `corecore` on GitHub
+- **Remote:** push to the `corecore` remote. Locally `origin` is stonymf/bubble-radio, which does NOT deploy.
 - **Shared storage:** Downloads at `/mnt/bandit/corecore` (external mount)
 
 ## Current State
